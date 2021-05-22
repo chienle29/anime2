@@ -1,0 +1,23 @@
+#tc-tools {
+    background: #fff;
+    padding: 20px;
+}
+table.tc-settings, table.tc-settings tbody, table.tc-settings tr {
+    width: 100%;
+}
+table.tc-settings tr {
+    display: flex;
+}
+table.tc-settings tr td {
+    margin: 10px 0;
+}
+table.tc-settings tr td:first-child {
+    width: 160px;
+    font-weight: bold;
+}
+table.tc-settings tr td:nth-child(2) {
+    flex-grow: 100;
+}
+table.tc-settings tr td input {
+    width: 100%;
+}

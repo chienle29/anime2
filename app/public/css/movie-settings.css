@@ -1,0 +1,65 @@
+.tc-settings-title {
+    padding: 20px 0;
+    border-bottom: 1px solid #ddd;
+}
+.tc-settings {
+    margin-top: 20px;
+}
+table.tc-settings tr {
+    display: flex;
+    align-items: center;
+}
+table.tc-settings tr td {
+    padding: 12px 0;
+    vertical-align: top;
+}
+table.tc-settings tr td label {
+    font-weight: bold;
+    font-size: 15px;
+}
+table.tc-settings tr td:first-child {
+    width: 160px;
+    float: left;
+}
+table.tc-settings tr td:nth-child(2) {
+    padding-left: 4px;
+    flex-grow: 100;
+}
+table.tc-settings tr td .multi-input-text .input-group:nth-child(2) {
+    padding-left: 4px;
+}
+table.tc-settings tr td .input-group {
+    display: flex;
+    flex-grow: 100;
+}
+.tc-settings {
+    position: relative;
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+table.tc-settings tr td .input-group.text input {
+    width: 100%;
+    border-color: #d2c0c0;
+    padding: 4px 5px;
+    font-size: 15px;
+}
+table.tc-settings tr td .input-group .input-container {
+    display: flex;
+    width: 100%;
+    flex-wrap: wrap;
+    align-items: center;
+    min-height: 26px;
+}
+.multi-input-text {
+    display: flex;
+    align-items: center;
+}
+.tc-settings .section-title {
+    font-weight: 600;
+    color: #689F38;
+    font-size: 18px;
+    padding: 10px 0 6px 0;
+    margin: 0;
+    border-bottom: 1px solid #ccc;
+}

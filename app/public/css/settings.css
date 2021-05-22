@@ -1,0 +1,14 @@
+.wrap.container-general-settings {
+    background: #fff;
+    padding: 20px;
+}
+form#post {
+    margin-top: 20px;
+}
+.wcc-settings tr {
+    margin-bottom: 10px;
+    display: block;
+}
+.wcc-settings tr td:first-child {
+    width: 279px;
+}

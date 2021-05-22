@@ -1,0 +1,12 @@
+{
+  "autoload": {
+    "psr-4": {
+      "CTMovie\\": "app/"
+    }
+  },
+  "require": {
+    "philo/laravel-blade": "3.*",
+    "fabpot/goutte": "^4.0",
+    "guzzlehttp/guzzle": "^7.3"
+  }
+}
