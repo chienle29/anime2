@@ -333,7 +333,36 @@ class MovieBot extends AbstractBot implements MakesCrawlRequest
         }
         return wp_insert_post($seriesData);
     }
+    /**
+     * update category for episode
+     * @param $episodeId
+     * @param $name
+     */
+    public function updateCategoryForEpisode($episodeId, $name) {
+        global $wpdb;
 
+        $args = array(
+            'name'                   => $name,
+            'get'                    => 'all',
+            'number'                 => 1,
+            'update_term_meta_cache' => false,
+            'orderby'                => 'none',
+            'suppress_filter'        => true,
+        );
+        $terms = get_terms($args);
+        $term = array_shift( $terms );
+        if($term->term_id){
+            $wpdb->insert(
+                $wpdb->term_relationships,
+                array(
+                    'object_id'        => $episodeId,
+                    'term_taxonomy_id' => $term->term_id,
+                )
+            );
+            $count = $term->count + 1;
+            $wpdb->update( $wpdb->term_taxonomy, compact( 'count' ), array( 'term_taxonomy_id' => $term->term_id ) );
+        }
+    }
     public function updatePostMeta($episodeId, $seriesId)
     {
         Utils::savePostMeta($episodeId, 'ero_seri', $seriesId, true);

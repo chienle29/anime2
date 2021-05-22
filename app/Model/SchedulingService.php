@@ -172,6 +172,7 @@ class SchedulingService
                 if ($postData) {
                     $episodeId = $bot->createNewEpisode($postData);
                     $bot->updatePostMeta($episodeId, $episode->series_id);
+                    $bot->updateCategoryForEpisode($episodeId, get_the_title($episode->series_id));
                     ObjectFactory::databaseService()->updateEpisodeStatus($episode->id, $episodeId);
                 }
                 $downloadUrl = $this->getListUrlDownloadEpisode($postData->getEpisodeUrlDownloads());
