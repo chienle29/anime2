@@ -242,7 +242,7 @@ class SchedulingService
      */
     public function saveSeriesMeta($seriesId, $meta_key, $meta_value)
     {
-        update_metadata('post', $seriesId, $meta_key, $meta_value);
+        update_post_meta($seriesId, $meta_key, $meta_value);
     }
 
     /**
@@ -441,13 +441,14 @@ class SchedulingService
     public function createEmbedUrl($driveId, $animeId)
     {
         $embedUrl = Connection::LAU_EMBED_URL . $driveId;
+        $embed = '<iframe src="'.$embedUrl.'" frameborder="0" style="overflow:hidden;height:100%;width:100%" height="100%" width="100%" allowfullscreen="true"></iframe>';
         $data = array(
             0 => array(
                 'ab_hostname' => 'lstream',
-                'ab_embed' => $embedUrl,
+                'ab_embed' => $embed,
                 '_state' => 'expanded'
             )
         );
-        $this->saveSeriesMeta($animeId, 'ab_embedgroup', serialize($data));
+        $this->saveSeriesMeta($animeId, 'ab_embedgroup', $data);
     }
 }
