@@ -21,10 +21,10 @@ use CTMovie\Model\Service\OauthGDrive;
 class SchedulingService
 {
     /** @var string $eventCollectUrls Cron name used to collects url */
-    public $eventCollectUrls   = 'tc_event_collect_urls';
+    public $eventCollectUrls = 'tc_event_collect_urls';
 
     /** @var string $eventCreateSeries Cron name used to create series */
-    public $eventCreateSeries   = 'tc_event_create_series';
+    public $eventCreateSeries = 'tc_event_create_series';
 
     /** @var string $eventCreateEpisode Cron name used to create episode */
     public $eventCreateEpisode = 'tc_event_create_episode';
@@ -38,7 +38,8 @@ class SchedulingService
     /**
      * SchedulingService constructor.
      */
-    public function __construct() {
+    public function __construct()
+    {
         $this->setCRONIntervals();
         //add_action( 'init', 'registerGenreTaxonomy', 0);
         add_action($this->eventCollectUrls, function () {
@@ -53,6 +54,7 @@ class SchedulingService
         add_action($this->eventUploadTest, function () {
             $this->downloadAndCreateEmbedUrl();
         });
+
         // Set what function to call for CRON events
         register_activation_hook(CT_MOVIE_PLUGIN_DIR . 'ct-movie-crawler.php', function () {
             ObjectFactory::schedulingService()->scheduleEvent($this->eventCollectUrls, 'tc_5_minutes');
@@ -110,11 +112,11 @@ class SchedulingService
             }
             $bot = new CategoryBot($settings, $campaignId);
             $categoryData = $bot->collectUrls(Utils::prepareUrl($settings[Settings::MAIN_PAGE_URL][0], $categoryUrl));
-            foreach($categoryData->getPostUrlList()->getItems() as $item) {
+            foreach ($categoryData->getPostUrlList()->getItems() as $item) {
                 $postUrl = $item->getUrl();
-                if(!$postUrl) continue;
+                if (!$postUrl) continue;
 
-                if(ObjectFactory::databaseService()->addUrl($campaignId, $postUrl, 0)) {
+                if (ObjectFactory::databaseService()->addUrl($campaignId, $postUrl, 0)) {
                     $results[] = $postUrl;
                 }
             }
@@ -137,9 +139,9 @@ class SchedulingService
             try {
                 $postData = $bot->crawlPost($url);
                 $seriesId = $bot->createNewSeries($postData);
-                $series   = get_post( $seriesId );
+                $series = get_post($seriesId);
                 // check have episode and post_type=anime
-                if(!empty($postData->getEpisode()) && $series->post_type == 'anime') {
+                if (!empty($postData->getEpisode()) && $series->post_type == 'anime') {
                     $bot->saveEpisodeMovie($seriesId, $postData->getEpisode(), $url);
                 }
                 $bot->saveFile($postData->getThumbnail(), 300, $seriesId);
@@ -158,23 +160,24 @@ class SchedulingService
     /**
      * get episode of series
      */
-    public function getDataEpisodeMovie() {
+    public function getDataEpisodeMovie()
+    {
 
         foreach ($this->movies->getEpisodes() as $episode) {
             $url = $episode->url;
             $settings = [];//get_post_meta(24);
             $bot = new MovieBot($settings);
-        try {
-            $postData = $bot->crawlEpisode($url); // return url download of movie
-            if ($postData) {
-                $episodeId = $bot->createNewEpisode($postData);
-                $bot->updatePostMeta($episodeId, $episode->series_id);
-                ObjectFactory::databaseService()->updateEpisodeStatus($episode->id, $episodeId);
+            try {
+                $postData = $bot->crawlEpisode($url); // return url download of movie
+                if ($postData) {
+                    $episodeId = $bot->createNewEpisode($postData);
+                    $bot->updatePostMeta($episodeId, $episode->series_id);
+                    ObjectFactory::databaseService()->updateEpisodeStatus($episode->id, $episodeId);
+                }
+                $downloadUrl = $this->getListUrlDownloadEpisode($postData->getEpisodeUrlDownloads());
+                ObjectFactory::databaseService()->updateEpisodeUrl($episode->id, $downloadUrl);
+            } catch (\Exception $e) {
             }
-            $downloadUrl = $this->getListUrlDownloadEpisode($postData->getEpisodeUrlDownloads());
-            ObjectFactory::databaseService()->updateEpisodeUrl($episode->id, $downloadUrl);
-        } catch (\Exception $e) {
-        }
         }
     }
 
@@ -182,7 +185,8 @@ class SchedulingService
      * get link download episode
      * @param $urlDownloadEpisode
      */
-    public function getListUrlDownloadEpisode($urlDownloadEpisode) {
+    public function getListUrlDownloadEpisode($urlDownloadEpisode)
+    {
         $settings = [];//get_post_meta(24);
         $bot = new MovieBot($settings);
         try {
@@ -194,46 +198,50 @@ class SchedulingService
 
     public function getRealDownloadUrl($urls): string
     {
-        $regex = '/.mp4$/';
-        $result = '';
-        foreach ($urls as $url) {
-            if (preg_match($regex, $url)) {
-                $result = $url;
-                break;
-            }
-        }
-        return $result;
+        return $urls[0];
+//        $regex = '/.mp4$/';
+//        $result = '';
+//        foreach ($urls as $url) {
+//            if (preg_match($regex, $url)) {
+//                $result = $url;
+//                break;
+//            }
+//        }
+//        return $result;
     }
 
     /**
      * meta data of series
      * @return string[]
      */
-    public function getSeriesMetaFields($data) {
+    public function getSeriesMetaFields($data)
+    {
         return [
             'ero_sub' => 'Sub',
-            'ero_mature'  => 'No',
-            'ero_hot'     => 'No',
+            'ero_mature' => 'No',
+            'ero_hot' => 'No',
             'ero_japanese' => $data->getTitle() ?? '',
-            'ero_status'  => $data->getStatus() ?? 'Ongoing',
-            'ero_censor'  => 'Censored',
-            'ero_type'    => 'TV',
-            'ero_durasi'  => '',
-            'ero_skor'    => '',
-            'ero_tayang'  => '',
+            'ero_status' => $data->getStatus() ?? 'Ongoing',
+            'ero_censor' => 'Censored',
+            'ero_type' => 'TV',
+            'ero_durasi' => '',
+            'ero_skor' => '',
+            'ero_tayang' => '',
             'ero_episode' => '',
             'ero_trailer' => '',
-            'ero_fansub'  => '',
+            'ero_fansub' => '',
         ];
     }
+
     /**
      * save meta data of series
      * @param $seriesId
      * @param $meta_key
      * @param $meta_value
      */
-    public function saveSeriesMeta($seriesId, $meta_key, $meta_value) {
-        update_metadata('post', $seriesId, $meta_key, $meta_value );
+    public function saveSeriesMeta($seriesId, $meta_key, $meta_value)
+    {
+        update_metadata('post', $seriesId, $meta_key, $meta_value);
     }
 
     /**
@@ -243,7 +251,8 @@ class SchedulingService
      * @param $taxonomy
      * @return mixed
      */
-    public function saveSeriesTaxonomy($post_ID, $terms, $taxonomy) {
+    public function saveSeriesTaxonomy($post_ID, $terms, $taxonomy)
+    {
         if (empty($terms)) return true;
         if (!taxonomy_exists($taxonomy)) return true;
         try {
@@ -254,12 +263,12 @@ class SchedulingService
                     $item,
                     $taxonomy,
                     array(
-                        'slug'    => sanitize_title($item)
+                        'slug' => sanitize_title($item)
                     )
                 );
                 $termArr[] = $term['term_id'];
             }
-            wp_set_post_terms( $post_ID, $termArr, $taxonomy);
+            wp_set_post_terms($post_ID, $termArr, $taxonomy);
         } catch (\Exception $exception) {
             // Log
         }
@@ -273,47 +282,48 @@ class SchedulingService
     function registerGenreTaxonomy()
     {
         $labels = array(
-            'name'                       => _x( 'Genres', 'Taxonomy General Name', 'text_domain' ),
-            'singular_name'              => _x( 'Genres', 'Taxonomy Singular Name', 'text_domain' ),
-            'menu_name'                  => __( 'Genres', 'text_domain' ),
-            'all_items'                  => __( 'All Genres', 'text_domain' ),
-            'parent_item'                => __( 'Parent Genre', 'text_domain' ),
-            'parent_item_colon'          => __( 'Parent Genre:', 'text_domain' ),
-            'new_item_name'              => __( 'New Genre Name', 'text_domain' ),
-            'add_new_item'               => __( 'Add New Genre', 'text_domain' ),
-            'edit_item'                  => __( 'Edit Genre', 'text_domain' ),
-            'update_item'                => __( 'Update Genre', 'text_domain' ),
-            'view_item'                  => __( 'View Genre', 'text_domain' ),
-            'separate_items_with_commas' => __( 'Separate genres with commas', 'text_domain' ),
-            'add_or_remove_items'        => __( 'Add or remove genres', 'text_domain' ),
-            'choose_from_most_used'      => __( 'Choose from the most used', 'text_domain' ),
-            'popular_items'              => __( 'Popular Genres', 'text_domain' ),
-            'search_items'               => __( 'Search Genres', 'text_domain' ),
-            'not_found'                  => __( 'Not Found', 'text_domain' )
+            'name' => _x('Genres', 'Taxonomy General Name', 'text_domain'),
+            'singular_name' => _x('Genres', 'Taxonomy Singular Name', 'text_domain'),
+            'menu_name' => __('Genres', 'text_domain'),
+            'all_items' => __('All Genres', 'text_domain'),
+            'parent_item' => __('Parent Genre', 'text_domain'),
+            'parent_item_colon' => __('Parent Genre:', 'text_domain'),
+            'new_item_name' => __('New Genre Name', 'text_domain'),
+            'add_new_item' => __('Add New Genre', 'text_domain'),
+            'edit_item' => __('Edit Genre', 'text_domain'),
+            'update_item' => __('Update Genre', 'text_domain'),
+            'view_item' => __('View Genre', 'text_domain'),
+            'separate_items_with_commas' => __('Separate genres with commas', 'text_domain'),
+            'add_or_remove_items' => __('Add or remove genres', 'text_domain'),
+            'choose_from_most_used' => __('Choose from the most used', 'text_domain'),
+            'popular_items' => __('Popular Genres', 'text_domain'),
+            'search_items' => __('Search Genres', 'text_domain'),
+            'not_found' => __('Not Found', 'text_domain')
         );
 
         $args = array(
-            'labels'                     => $labels,
-            'hierarchical'               => true,
-            'public'                     => true,
-            'show_ui'                    => true,
-            'show_admin_column'          => true,
-            'show_in_nav_menus'          => true,
-            'show_tagcloud'              => true
+            'labels' => $labels,
+            'hierarchical' => true,
+            'public' => true,
+            'show_ui' => true,
+            'show_admin_column' => true,
+            'show_in_nav_menus' => true,
+            'show_tagcloud' => true
         );
-        register_taxonomy( 'genres', array( 'anime' ), $args );
+        register_taxonomy('genres', array('anime'), $args);
     }
 
     /**
      * Adds custom time intervals for CRON scheduling.
      */
-    private function setCRONIntervals() {
+    private function setCRONIntervals()
+    {
         $intervals = $this->getIntervals();
-        add_filter('cron_schedules', function($schedules) use ($intervals) {
-            foreach($intervals as $name => $interval) {
+        add_filter('cron_schedules', function ($schedules) use ($intervals) {
+            foreach ($intervals as $name => $interval) {
                 $schedules[$name] = [
-                    'interval'  =>  $interval[1],
-                    'display'   =>  $interval[0]
+                    'interval' => $interval[1],
+                    'display' => $interval[0]
                 ];
             }
 
@@ -325,31 +335,32 @@ class SchedulingService
      * @return array Structured as
      * <b>[ interval_key => [interval_description, interval_in_seconds], interval_key_2 => [ ... ], ... ]</b>
      */
-    public function getIntervals() {
+    public function getIntervals()
+    {
         if ($this->intervals) return $this->intervals;
 
         $this->intervals = [
             // Interval Name        Description              Interval in Seconds
-            'tc_1_minute'    =>  [__('Every minute'),        60],
-            'tc_2_minutes'   =>  [__('Every 2 minutes'),     2 * 60],
-            'tc_3_minutes'   =>  [__('Every 3 minutes'),     3 * 60],
-            'tc_5_minutes'   =>  [__('Every 5 minutes'),     5 * 60],
-            'tc_10_minutes'  =>  [__('Every 10 minutes'),    10 * 60],
-            'tc_15_minutes'  =>  [__('Every 15 minutes'),    15 * 60],
-            'tc_20_minutes'  =>  [__('Every 20 minutes'),    20 * 60],
-            'tc_30_minutes'  =>  [__('Every 30 minutes'),    30 * 60],
-            'tc_45_minutes'  =>  [__('Every 45 minutes'),    45 * 60],
-            'tc_1_hour'      =>  [__('Every hour'),          60 * 60],
-            'tc_2_hours'     =>  [__('Every 2 hours'),       2 * 60 * 60],
-            'tc_3_hours'     =>  [__('Every 3 hours'),       3 * 60 * 60],
-            'tc_4_hours'     =>  [__('Every 4 hours'),       4 * 60 * 60],
-            'tc_6_hours'     =>  [__('Every 6 hours'),       6 * 60 * 60],
-            'tc_12_hours'    =>  [__('Twice a day'),         12 * 60 * 60],
-            'tc_1_day'       =>  [__('Once a day'),          24 * 60 * 60],
-            'tc_2_days'      =>  [__('Every 2 days'),        2 * 24 * 60 * 60],
-            'tc_1_week'      =>  [__('Once a week'),         7 * 24 * 60 * 60],
-            'tc_2_weeks'     =>  [__('Every 2 weeks'),       2 * 7 * 24 * 60 * 60],
-            'tc_1_month'     =>  [__('Once a month'),        4 * 7 * 24 * 60 * 60],
+            'tc_1_minute' => [__('Every minute'), 60],
+            'tc_2_minutes' => [__('Every 2 minutes'), 2 * 60],
+            'tc_3_minutes' => [__('Every 3 minutes'), 3 * 60],
+            'tc_5_minutes' => [__('Every 5 minutes'), 5 * 60],
+            'tc_10_minutes' => [__('Every 10 minutes'), 10 * 60],
+            'tc_15_minutes' => [__('Every 15 minutes'), 15 * 60],
+            'tc_20_minutes' => [__('Every 20 minutes'), 20 * 60],
+            'tc_30_minutes' => [__('Every 30 minutes'), 30 * 60],
+            'tc_45_minutes' => [__('Every 45 minutes'), 45 * 60],
+            'tc_1_hour' => [__('Every hour'), 60 * 60],
+            'tc_2_hours' => [__('Every 2 hours'), 2 * 60 * 60],
+            'tc_3_hours' => [__('Every 3 hours'), 3 * 60 * 60],
+            'tc_4_hours' => [__('Every 4 hours'), 4 * 60 * 60],
+            'tc_6_hours' => [__('Every 6 hours'), 6 * 60 * 60],
+            'tc_12_hours' => [__('Twice a day'), 12 * 60 * 60],
+            'tc_1_day' => [__('Once a day'), 24 * 60 * 60],
+            'tc_2_days' => [__('Every 2 days'), 2 * 24 * 60 * 60],
+            'tc_1_week' => [__('Once a week'), 7 * 24 * 60 * 60],
+            'tc_2_weeks' => [__('Every 2 weeks'), 2 * 7 * 24 * 60 * 60],
+            'tc_1_month' => [__('Once a month'), 4 * 7 * 24 * 60 * 60],
         ];
 
         return $this->intervals;
@@ -360,8 +371,9 @@ class SchedulingService
      *
      * @param string $eventName Name of the event
      */
-    private function removeScheduledEvent($eventName) {
-        if($timestamp = wp_next_scheduled($eventName)) {
+    private function removeScheduledEvent($eventName)
+    {
+        if ($timestamp = wp_next_scheduled($eventName)) {
             wp_unschedule_event($timestamp, $eventName);
         }
     }
@@ -372,12 +384,13 @@ class SchedulingService
      * @param string $eventName Name of the event
      * @param string $interval One of the registered CRON interval keys
      */
-    private function scheduleEvent($eventName, $interval) {
+    private function scheduleEvent($eventName, $interval)
+    {
         // Try to remove the next schedule.
         $this->removeScheduledEvent($eventName);
 
         // Schedule the event
-        if(!$timestamp = wp_get_schedule($eventName)) {
+        if (!$timestamp = wp_get_schedule($eventName)) {
             wp_schedule_event(time() + 5, $interval, $eventName);
         }
     }
@@ -385,9 +398,10 @@ class SchedulingService
     /**
      * Schedule events with time intervals specified by the user
      */
-    public function scheduleEvents() {
+    public function scheduleEvents()
+    {
         $intervalCollectUrls = get_option(Settings::COLLECT_URLS_INTERVAL);
-        $intervalCrawlPosts  = get_option(Settings::CREATE_SERIES_INTERVAL);
+        $intervalCrawlPosts = get_option(Settings::CREATE_SERIES_INTERVAL);
 
         $this->scheduleEvent($this->eventCollectUrls, $intervalCollectUrls);
         $this->scheduleEvent($this->eventCreateSeries, $intervalCrawlPosts);
@@ -397,10 +411,11 @@ class SchedulingService
      * Handles scheduling by setting the CRON jobs if scheduling is active, or deleting current jobs if scheduling is
      * disabled.
      */
-    public function handleCronEvents() {
+    public function handleCronEvents()
+    {
         // URL collection and post-crawling
         $cronIsActive = get_option(Settings::AUTO_CRAWL_MOVIE) ? true : false;
-        if($cronIsActive) {
+        if ($cronIsActive) {
             $this->scheduleEvents();
         } else {
             $this->removeURLCollectionAndCrawlingEvents();
@@ -410,9 +425,10 @@ class SchedulingService
     /**
      * Removes scheduled events
      */
-    public function removeURLCollectionAndCrawlingEvents() {
+    public function removeURLCollectionAndCrawlingEvents()
+    {
         $eventNames = [$this->eventCollectUrls, $this->eventCreateSeries];
-        foreach($eventNames as $eventName) {
+        foreach ($eventNames as $eventName) {
             $this->removeScheduledEvent($eventName);
         }
     }
@@ -424,13 +440,13 @@ class SchedulingService
     public function createEmbedUrl($driveId, $animeId)
     {
         $embedUrl = Connection::LAU_EMBED_URL . $driveId;
-        $data = [
-            [
+        $data = array(
+            0 => array(
                 'ab_hostname' => 'lstream',
-                'ab_embed'    => $embedUrl,
-                '_state'      => 'expanded'
-            ]
-        ];
+                'ab_embed' => $embedUrl,
+                '_state' => 'expanded'
+            )
+        );
         $this->saveSeriesMeta($animeId, 'ab_embedgroup', serialize($data));
     }
 }

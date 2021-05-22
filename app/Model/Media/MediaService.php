@@ -87,7 +87,7 @@ class MediaService
 
         // Download file to temp dir. If the timeout is 0 seconds, use WP's default timeout value.
         $timeoutSec = $options->getTimeoutSeconds();
-        $tempFile = download_url($fileUrl, 300, true);
+        $tempFile = download_url($fileUrl, $timeoutSec, true);
 
         if (!is_wp_error($tempFile)) {
             try {
