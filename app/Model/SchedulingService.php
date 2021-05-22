@@ -72,16 +72,16 @@ class SchedulingService
     {
         $data = ObjectFactory::databaseService()->getDownloadUrl();
         foreach ($data as $item) {
+            $videoName = 'video.mp4';
+            $filePath = CT_MOVIE_PLUGIN_DIR . $videoName;
             $urlDownload = $item->download_url;
-            $fileArr = MediaService::getInstance()
-                ->saveMedia($urlDownload, MediaSavingOptions::fromSiteSettings(999999));
-            if (empty($fileArr)) continue;
+            $this->removeVideo($videoName);
+            $isDownload = MediaService::getInstance()->downloadVideo($videoName, $urlDownload);
+            if (!$isDownload) continue;
 
-            $filePath = $fileArr['file'];
-            $pathArr = explode('/', $filePath);
-            $fileName = end($pathArr);
+            if (filesize($filePath) == 0) continue;
 
-            $url = ObjectFactory::lauConnection()->getDriveUrl($fileName);
+            $url = ObjectFactory::lauConnection()->getDriveUrl($videoName);
             if (!$url) continue;
 
             $id = OauthGDrive::uploadFileToGoogleDrive($url, $filePath);
@@ -93,6 +93,16 @@ class SchedulingService
             $this->createEmbedUrl($fileId, $item->anime_saved_id);
 
             ObjectFactory::databaseService()->updateDownload($item->id);
+        }
+    }
+
+    /**
+     * @param $videoName
+     */
+    public function removeVideo($videoName)
+    {
+        if (is_file(CT_MOVIE_PLUGIN_DIR.$videoName)) {
+            unlink(CT_MOVIE_PLUGIN_DIR.$videoName);
         }
     }
 

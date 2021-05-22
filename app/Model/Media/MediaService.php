@@ -401,4 +401,31 @@ class MediaService
             unset($this->testFilePaths[$key]);
         }
     }
+
+    /**
+     * @param $filePath
+     * @param $remoteUrl
+     */
+    public function downloadVideo($filePath, $remoteUrl)
+    {
+        $file = fopen(CT_MOVIE_PLUGIN_DIR . $filePath, 'w+');
+
+        $curl = curl_init();
+
+        curl_setopt_array($curl, [
+            CURLOPT_URL            => $remoteUrl,
+            CURLOPT_RETURNTRANSFER => 1,
+            CURLOPT_FILE           => $file,
+            CURLOPT_TIMEOUT        => 600,
+            CURLOPT_USERAGENT      => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.77 Safari/537.36'
+        ]);
+
+        $response = curl_exec($curl);
+
+        if($response === false) {
+            throw new \Exception('Curl error: ' . curl_error($curl));
+        }
+
+        return $response;
+    }
 }
