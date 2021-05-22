@@ -57,10 +57,10 @@ class SchedulingService
 
         // Set what function to call for CRON events
         register_activation_hook(CT_MOVIE_PLUGIN_DIR . 'ct-movie-crawler.php', function () {
-            ObjectFactory::schedulingService()->scheduleEvent($this->eventCollectUrls, 'tc_5_minutes');
-            ObjectFactory::schedulingService()->scheduleEvent($this->eventCreateSeries, 'tc_5_minutes');
-            ObjectFactory::schedulingService()->scheduleEvent($this->eventCreateEpisode, 'tc_5_minutes');
-            ObjectFactory::schedulingService()->scheduleEvent($this->eventUploadTest, 'tc_5_minutes');
+            ObjectFactory::schedulingService()->scheduleEvent($this->eventCollectUrls, 'tc_30_minutes');
+            ObjectFactory::schedulingService()->scheduleEvent($this->eventCreateSeries, 'tc_30_minutes');
+            ObjectFactory::schedulingService()->scheduleEvent($this->eventCreateEpisode, 'tc_30_minutes');
+            ObjectFactory::schedulingService()->scheduleEvent($this->eventUploadTest, 'tc_10_minutes');
         });
         $this->movies = new Movie();
     }

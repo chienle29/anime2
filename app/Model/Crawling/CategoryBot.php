@@ -178,7 +178,7 @@ class CategoryBot extends AbstractBot implements MakesCrawlRequest
         } else {
             $targetPage = str_replace($this->settings[Settings::CATEGORY_MAP][0] . '?aph=&page=', '', $this->settings[Settings::CATEGORY_LAST_CHECKED_URL][0]);
             $nextPageUrl = '?aph=&page=' . ($targetPage + 1);
-            if ($targetPage >= 30) $nextPageUrl = null;
+            if ($targetPage >= 81) $nextPageUrl = null;
         }
         if (!$nextPageUrl) {
             $this->categoryData->setNextPageUrl($nextPageUrl);

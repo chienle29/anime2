@@ -243,7 +243,7 @@ class DatabaseService
     public function getDownloadUrl()
     {
         global $wpdb;
-        $results = $wpdb->get_results($wpdb->prepare("SELECT id, anime_saved_id, download_url FROM " . $this->getDbTableEpisodeName() . " WHERE anime_saved_id != %d AND is_downloaded = %s LIMIT 50", NULL, 0));
+        $results = $wpdb->get_results($wpdb->prepare("SELECT id, anime_saved_id, download_url FROM " . $this->getDbTableEpisodeName() . " WHERE anime_saved_id IS NOT NULL AND is_downloaded = %s ORDER BY RAND() LIMIT 1", 0));
 
         if(!empty($results)) return $results;
         return null;
