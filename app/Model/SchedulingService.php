@@ -114,7 +114,7 @@ class SchedulingService
                 $postUrl = $item->getUrl();
                 if(!$postUrl) continue;
 
-                if(ObjectFactory::databaseService()->addUrl($campaignId, $postUrl, $settings[Settings::CT_TOOLS_CATEGORY_ID][0])) {
+                if(ObjectFactory::databaseService()->addUrl($campaignId, $postUrl, 0)) {
                     $results[] = $postUrl;
                 }
             }

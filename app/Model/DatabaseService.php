@@ -40,7 +40,6 @@ class DatabaseService
             id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
             post_id bigint(20) NOT NULL,
             url varchar(2560) NOT NULL,
-            category_id mediumint(9) NOT NULL,
             is_saved boolean NOT NULL DEFAULT FALSE,
             saved_post_id bigint(20) UNSIGNED,
             created_at datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
@@ -95,7 +94,7 @@ class DatabaseService
      * @param bool $isSaved
      * @return int ID of the inserted row
      */
-    public function addUrl($postId, $url, $categoryId, $isSaved = false) {
+    public function addUrl($postId, $url, $isSaved = false) {
         global $wpdb;
 
         // Check if this URL is already added
@@ -110,7 +109,6 @@ class DatabaseService
             [
                 'post_id'       =>  $postId,
                 'url'           =>  $url,
-                'category_id'   =>  $categoryId,
                 'is_saved'      =>  $isSaved,
                 'created_at'    =>  current_time('mysql'),
                 'updated_at'    =>  current_time('mysql'),
