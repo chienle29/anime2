@@ -429,7 +429,7 @@ class MediaService
                 throw new \Exception('Curl error: ' . curl_error($curl));
             }
         } else {
-            $response = file_put_contents($filePath, fopen($remoteUrl, 'r'));
+            $response = file_put_contents(@$filePath, fopen($remoteUrl, 'r'));
         }
 
         return $response;
