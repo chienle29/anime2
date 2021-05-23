@@ -82,33 +82,36 @@ class SchedulingService
                 error_log(  'download file thất bại. file: ' . $isDownload);
                 continue;
             }
+            error_log( 'download xong: '. $isDownload);
 
             if (filesize($filePath) == 0) {
                 error_log(  'File size = 0. filesize: ' . filesize($filePath));
                 continue;
             }
+            error_log( 'file size: '. filesize($filePath));
 
             $url = ObjectFactory::lauConnection()->getDriveUrl($videoName);
             if (!$url) {
                 error_log(  'Có lỗi khi get drive url. URL:' . $url);
                 continue;
             }
-
+            error_log( 'drive url: '. $url);
             $id = OauthGDrive::uploadFileToGoogleDrive($url, $filePath);
             if (!$id) {
                 error_log(  'Upload lên google drive fail. ID:' . $id);
                 continue;
             }
-
+            error_log( 'upload file drive: '. $id);
             $fileId = ObjectFactory::lauConnection()->createFileByDriveId(get_the_title($item->anime_saved_id), $id);
             if (!$fileId) {
                 error_log(  'Tạo file trên lậu fail. ID:' . $fileId);
                 continue;
             }
-
+            error_log( 'Tạo file trên lậu: '. $url);
             $this->createEmbedUrl($fileId, $item->anime_saved_id);
-
+            error_log( 'create embed: ');
             ObjectFactory::databaseService()->updateDownload($item->id);
+            error_log( 'set is_downlod = 1: ');
         }
         }catch (\Throwable $e) {
             error_log(  'error when create embed url: '. $e->getMessage() );
