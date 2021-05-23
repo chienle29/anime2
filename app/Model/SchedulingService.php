@@ -70,6 +70,7 @@ class SchedulingService
      */
     public function downloadAndCreateEmbedUrl()
     {
+        try {
         $data = ObjectFactory::databaseService()->getDownloadUrl();
         foreach ($data as $item) {
             $videoName = 'video.mp4';
@@ -94,6 +95,9 @@ class SchedulingService
 
             ObjectFactory::databaseService()->updateDownload($item->id);
         }
+        }catch (\Throwable $e) {
+            error_log(  'error when create embed url: '. $e->getMessage() );
+        }
     }
 
     /**
@@ -113,26 +117,30 @@ class SchedulingService
     {
         $args = ['post_type' => Environment::CT_POST_TYPE, 'post_status' => 'publish'];
         $campaignList = get_posts($args);
-        foreach ($campaignList as $campaign) {
-            $campaignId = $campaign->ID;
-            $settings = get_post_meta($campaignId);
-            $categoryUrl = $settings[Settings::CATEGORY_MAP][0];
-            if (!empty($settings[Settings::CATEGORY_LAST_CHECKED_URL][0])) {
-                $categoryUrl = $settings[Settings::CATEGORY_LAST_CHECKED_URL][0];
-            }
-            $bot = new CategoryBot($settings, $campaignId);
-            $categoryData = $bot->collectUrls(Utils::prepareUrl($settings[Settings::MAIN_PAGE_URL][0], $categoryUrl));
-            foreach ($categoryData->getPostUrlList()->getItems() as $item) {
-                $postUrl = $item->getUrl();
-                if (!$postUrl) continue;
+        try {
+            foreach ($campaignList as $campaign) {
+                $campaignId = $campaign->ID;
+                $settings = get_post_meta($campaignId);
+                $categoryUrl = $settings[Settings::CATEGORY_MAP][0];
+                if (!empty($settings[Settings::CATEGORY_LAST_CHECKED_URL][0])) {
+                    $categoryUrl = $settings[Settings::CATEGORY_LAST_CHECKED_URL][0];
+                }
+                $bot = new CategoryBot($settings, $campaignId);
+                $categoryData = $bot->collectUrls(Utils::prepareUrl($settings[Settings::MAIN_PAGE_URL][0], $categoryUrl));
+                foreach ($categoryData->getPostUrlList()->getItems() as $item) {
+                    $postUrl = $item->getUrl();
+                    if (!$postUrl) continue;
 
-                if (ObjectFactory::databaseService()->addUrl($campaignId, $postUrl, 0)) {
-                    $results[] = $postUrl;
+                    if (ObjectFactory::databaseService()->addUrl($campaignId, $postUrl, 0)) {
+                        $results[] = $postUrl;
+                    }
+                }
+                if ($categoryData->getNextPageUrl()) {
+                    Utils::savePostMeta($campaignId, Settings::CATEGORY_LAST_CHECKED_URL, $categoryData->getNextPageUrl(), true);
                 }
             }
-            if ($categoryData->getNextPageUrl()) {
-                Utils::savePostMeta($campaignId, Settings::CATEGORY_LAST_CHECKED_URL, $categoryData->getNextPageUrl(), true);
-            }
+        }catch (\Throwable $e) {
+            error_log(  'error when collect urls: '. $e->getMessage() );
         }
     }
 
@@ -162,7 +170,8 @@ class SchedulingService
                 $this->saveSeriesTaxonomy($seriesId, [$postData->getTitle()], 'category');
                 //$this->saveSeriesTaxonomy($seriesId, $postData->getGenre(), 'genres');
                 ObjectFactory::databaseService()->updateSerieSUrl($seriesId, $movie->id);
-            } catch (\Exception $e) {
+            } catch (\Throwable $e) {
+                error_log(  'error when create series: '. $e->getMessage() );
             }
         }
     }
@@ -189,7 +198,8 @@ class SchedulingService
                 }
                 $downloadUrl = $this->getListUrlDownloadEpisode($postData->getEpisodeUrlDownloads());
                 ObjectFactory::databaseService()->updateEpisodeUrl($episode->id, $downloadUrl);
-            } catch (\Exception $e) {
+            }catch (\Throwable $e) {
+                error_log(  'error when get data episode: '. $e->getMessage() );
             }
         }
     }
@@ -197,6 +207,7 @@ class SchedulingService
     /**
      * get link download episode
      * @param $urlDownloadEpisode
+     * @return string
      */
     public function getListUrlDownloadEpisode($urlDownloadEpisode)
     {
@@ -205,7 +216,9 @@ class SchedulingService
         try {
             $postData = $bot->crawlListLinkDownLoadEpisode($urlDownloadEpisode);
             return $this->getRealDownloadUrl($postData->getEpisodeUrlDownloadList());
-        } catch (\Exception $e) {
+        }catch (\Throwable $e) {
+            error_log(  'error when url download episode: '. $e->getMessage() );
+            return null;
         }
     }
 
@@ -282,8 +295,8 @@ class SchedulingService
                 $termArr[] = $term['term_id'];
             }
             wp_set_post_terms($post_ID, $termArr, $taxonomy);
-        } catch (\Exception $exception) {
-            // Log
+        }catch (\Throwable $e) {
+            error_log(  'error when save series taxonomy: '. $e->getMessage() );
         }
 
         return true;

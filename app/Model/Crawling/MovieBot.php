@@ -280,8 +280,8 @@ class MovieBot extends AbstractBot implements MakesCrawlRequest
                     ]
                 );
             }
-        }catch (\Exception $exception) {
-            return false;
+        }catch (\Throwable $e) {
+            error_log(  'save episode movie error: '. $e->getMessage() );
         }
 
         return true;
@@ -304,7 +304,8 @@ class MovieBot extends AbstractBot implements MakesCrawlRequest
     public function getListUrlDownloadEpisode($urlDownloadEpisode) {
         try {
             return $this->crawlListLinkDownLoadEpisode($urlDownloadEpisode);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            error_log(  'can not get link download '. $e->getMessage() );
         }
     }
 
