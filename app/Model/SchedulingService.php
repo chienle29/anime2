@@ -181,7 +181,9 @@ class SchedulingService
                 $postData = $bot->crawlEpisode($url); // return url download of movie
                 if ($postData) {
                     $episodeId = $bot->createNewEpisode($postData);
-                    $bot->updatePostMeta($episodeId, $episode->series_id);
+                    $arr = explode('-', $url);
+                    $chapter = end($arr);
+                    $bot->updatePostMeta($episodeId, $episode->series_id, $chapter);
                     $bot->updateCategoryForEpisode($episodeId, get_the_title($episode->series_id));
                     ObjectFactory::databaseService()->updateEpisodeStatus($episode->id, $episodeId);
                 }

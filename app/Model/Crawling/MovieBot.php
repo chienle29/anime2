@@ -363,11 +363,11 @@ class MovieBot extends AbstractBot implements MakesCrawlRequest
             $wpdb->update( $wpdb->term_taxonomy, compact( 'count' ), array( 'term_taxonomy_id' => $term->term_id ) );
         }
     }
-    public function updatePostMeta($episodeId, $seriesId)
+    public function updatePostMeta($episodeId, $seriesId, $chapter = 1)
     {
         Utils::savePostMeta($episodeId, 'ero_seri', $seriesId, true);
         Utils::savePostMeta($episodeId, 'ero_subepisode', 'Sub', true);
-        Utils::savePostMeta($episodeId, 'ero_episodebaru', 1, true);
-        Utils::savePostMeta($episodeId, 'ero_episodetitle', 1, true);
+        Utils::savePostMeta($episodeId, 'ero_episodebaru', $chapter, true);
+        Utils::savePostMeta($episodeId, 'ero_episodetitle', get_the_title($episodeId), true);
     }
 }
