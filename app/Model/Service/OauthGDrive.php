@@ -15,6 +15,7 @@ class OauthGDrive
      */
     public static function uploadFileToGoogleDrive($url, $file)
     {
+        set_time_limit(0);
         $fileSize = filesize($file);
 
         $data = ['file' => new CURLFile($file)];
