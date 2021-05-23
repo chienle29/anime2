@@ -15,13 +15,11 @@ class OauthGDrive
      */
     public static function uploadFileToGoogleDrive($url, $file)
     {
-        set_time_limit(0);
         $fileSize = filesize($file);
 
-        $data = ['file' => new CURLFile($file)];
-
         $curl = curl_init();
-
+        $read = fopen($file, 'r');
+        $data = fread($read, $fileSize);
         curl_setopt_array($curl, array(
             CURLOPT_URL => $url,
             CURLOPT_RETURNTRANSFER => true,
@@ -34,8 +32,7 @@ class OauthGDrive
             CURLOPT_POSTFIELDS => $data,
             CURLOPT_HTTPHEADER => [
                 'Content-Type'   => 'video/mp4',
-                'Content-Length' => $fileSize,
-                'Content-Range'  => 'bytes 0-'.($fileSize-1).'/'.$fileSize
+                'Content-Length' => $fileSize
             ]
         ));
 

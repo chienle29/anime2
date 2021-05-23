@@ -408,7 +408,6 @@ class MediaService
      */
     public function downloadVideo($filePath, $remoteUrl)
     {
-        set_time_limit(0);
         $file = fopen($filePath, 'w+');
         chmod($filePath, 0755);
 
