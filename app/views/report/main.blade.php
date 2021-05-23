@@ -58,8 +58,6 @@
     a, a:hover {
         text-decoration: none !important; }
 
-    .content {
-        padding: 7rem 0; }
 
     h2 {
         font-size: 20px; }
@@ -218,5 +216,26 @@
     .card-body p:last-child {
         font-size: 25px;
         font-weight: bold;
+    }
+    @media (min-width: 1200px){
+        .col-md-3{
+            flex: 0 0 25%;
+            max-width: 22%;
+        }
+    }
+
+    .row{
+        display: -ms-flexbox;
+        display: flex;
+        -ms-flex-wrap: wrap;
+        flex-wrap: wrap;
+        margin-right: -15px;
+        margin-left: -15px;
+    }
+    .col-md-3{
+        position: relative;
+        width: 100%;
+        padding-right: 15px;
+        padding-left: 15px;
     }
 </style>
