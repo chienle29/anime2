@@ -73,10 +73,10 @@ class SchedulingService
         try {
         $data = ObjectFactory::databaseService()->getDownloadUrl();
         foreach ($data as $item) {
-            $videoName = 'video.mp4';
+            $videoName = sanitize_title(get_the_title($item->anime_saved_id)) . '.mp4';
             $filePath = CT_MOVIE_PLUGIN_DIR . $videoName;
             $urlDownload = $item->download_url;
-            $this->removeVideo($videoName);
+
             $isDownload = MediaService::getInstance()->downloadVideo($filePath, $urlDownload);
             if (!$isDownload) continue;
 
@@ -97,16 +97,19 @@ class SchedulingService
         }
         }catch (\Throwable $e) {
             error_log(  'error when create embed url: '. $e->getMessage() );
+        } finally {
+            $this->removeVideo($filePath);
         }
+
     }
 
     /**
-     * @param $videoName
+     * @param $filePath
      */
-    public function removeVideo($videoName)
+    public function removeVideo($filePath)
     {
-        if (is_file(CT_MOVIE_PLUGIN_DIR.$videoName)) {
-            unlink(CT_MOVIE_PLUGIN_DIR.$videoName);
+        if (is_file($filePath)) {
+            unlink($filePath);
         }
     }
 

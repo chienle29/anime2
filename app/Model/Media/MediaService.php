@@ -419,7 +419,7 @@ class MediaService
                 CURLOPT_URL            => $remoteUrl,
                 CURLOPT_RETURNTRANSFER => 1,
                 CURLOPT_FILE           => @$file,
-                CURLOPT_TIMEOUT        => 1000,
+                CURLOPT_TIMEOUT        => 10000,
                 CURLOPT_USERAGENT      => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.77 Safari/537.36'
             ]);
 
