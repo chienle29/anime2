@@ -42,18 +42,18 @@ class SchedulingService
     {
         $this->setCRONIntervals();
         //add_action( 'init', 'registerGenreTaxonomy', 0);
-//        add_action($this->eventCollectUrls, function () {
-//            $this->tc_executeEventCollectUrls();
-//        });
-//        add_action($this->eventCreateSeries, function () {
-//            $this->createSeriesAndGetMovieUrl();
-//        });
-//        add_action($this->eventCreateEpisode, function () {
-//            $this->getDataEpisodeMovie();
-//        });
-//        add_action($this->eventUploadTest, function () {
-//            $this->downloadAndCreateEmbedUrl();
-//        });
+        add_action($this->eventCollectUrls, function () {
+            $this->tc_executeEventCollectUrls();
+        });
+        add_action($this->eventCreateSeries, function () {
+            $this->createSeriesAndGetMovieUrl();
+        });
+        add_action($this->eventCreateEpisode, function () {
+            $this->getDataEpisodeMovie();
+        });
+        add_action($this->eventUploadTest, function () {
+            $this->downloadAndCreateEmbedUrl();
+        });
 
         // Set what function to call for CRON events
         register_activation_hook(CT_MOVIE_PLUGIN_DIR . 'ct-movie-crawler.php', function () {
@@ -63,7 +63,6 @@ class SchedulingService
             ObjectFactory::schedulingService()->scheduleEvent($this->eventUploadTest, 'tc_10_minutes');
         });
         $this->movies = new Movie();
-        $this->downloadAndCreateEmbedUrl();
     }
 
     /**
