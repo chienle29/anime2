@@ -92,7 +92,7 @@ class MediaService
         if (!is_wp_error($tempFile)) {
             try {
                 $infoFinder = new FileInfoFinder($tempFile, $fileUrl, $this->getLastResponse());
-            } catch (\Exception $e) {
+            } catch (\Error $e) {
                 // Execution of this catch statement is highly unlikely.
                 $this->onSaveMediaFinished();
                 return null;
@@ -140,11 +140,11 @@ class MediaService
                 $this->onSaveMediaFinished();
                 return $results;
             } else {
-                // Error. cần log lại...
+                error_log('error in process save media: '. $results['error']);
             }
 
         } else {
-            // Error. cần log lại...
+            error_log('something error in process download file');
         }
 
         $this->onSaveMediaFinished();

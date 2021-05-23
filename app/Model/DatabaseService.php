@@ -203,7 +203,7 @@ class DatabaseService
     public function getCountAnimeSaved()
     {
         global $wpdb;
-        $results = $wpdb->get_results($wpdb->prepare("SELECT COUNT(id) count FROM {$this->getDbTableEpisodeName()} WHERE is_save = 1"));
+        $results = $wpdb->get_results($wpdb->prepare("SELECT COUNT(id) count FROM {$this->getDbTableEpisodeName()} WHERE saved = 1"));
 
         if(!empty($results)) {
             return $results[0]->count;
