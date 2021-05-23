@@ -76,20 +76,35 @@ class SchedulingService
             $videoName = sanitize_title(get_the_title($item->anime_saved_id)) . '.mp4';
             $filePath = CT_MOVIE_PLUGIN_DIR . $videoName;
             $urlDownload = $item->download_url;
-
+            error_log(  'url download. url: ' . $urlDownload);
             $isDownload = MediaService::getInstance()->downloadVideo($filePath, $urlDownload);
-            if (!$isDownload) continue;
+            if (!$isDownload) {
+                error_log(  'download file thất bại. file: ' . $isDownload);
+                continue;
+            }
 
-            if (filesize($filePath) == 0) continue;
+            if (filesize($filePath) == 0) {
+                error_log(  'File size = 0. filesize: ' . filesize($filePath));
+                continue;
+            }
 
             $url = ObjectFactory::lauConnection()->getDriveUrl($videoName);
-            if (!$url) continue;
+            if (!$url) {
+                error_log(  'Có lỗi khi get drive url. URL:' . $url);
+                continue;
+            }
 
             $id = OauthGDrive::uploadFileToGoogleDrive($url, $filePath);
-            if (!$id) continue;
+            if (!$id) {
+                error_log(  'Upload lên google drive fail. ID:' . $id);
+                continue;
+            }
 
             $fileId = ObjectFactory::lauConnection()->createFileByDriveId(get_the_title($item->anime_saved_id), $id);
-            if (!$fileId) continue;
+            if (!$fileId) {
+                error_log(  'Tạo file trên lậu fail. ID:' . $fileId);
+                continue;
+            }
 
             $this->createEmbedUrl($fileId, $item->anime_saved_id);
 
@@ -116,7 +131,7 @@ class SchedulingService
     /**
      * Cron collects url.
      */
-    private function tc_executeEventCollectUrls()
+    public function tc_executeEventCollectUrls()
     {
         $args = ['post_type' => Environment::CT_POST_TYPE, 'post_status' => 'publish'];
         $campaignList = get_posts($args);
@@ -150,7 +165,7 @@ class SchedulingService
     /**
      * Collect information and create series.
      */
-    private function createSeriesAndGetMovieUrl()
+    public function createSeriesAndGetMovieUrl()
     {
         foreach ($this->movies->getData() as $movie) {
             $campaignId = $movie->post_id;
