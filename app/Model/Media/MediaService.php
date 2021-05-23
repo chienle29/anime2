@@ -408,22 +408,28 @@ class MediaService
      */
     public function downloadVideo($filePath, $remoteUrl)
     {
-        $file = fopen(CT_MOVIE_PLUGIN_DIR . $filePath, 'w+');
+        $file = fopen($filePath, 'w+');
+        chmod($filePath, 0755);
 
-        $curl = curl_init();
+        $regex = "/.mp4$/";
+        if (preg_match($regex, $remoteUrl)) {
+            $curl = curl_init();
 
-        curl_setopt_array($curl, [
-            CURLOPT_URL            => $remoteUrl,
-            CURLOPT_RETURNTRANSFER => 1,
-            CURLOPT_FILE           => $file,
-            CURLOPT_TIMEOUT        => 600,
-            CURLOPT_USERAGENT      => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.77 Safari/537.36'
-        ]);
+            curl_setopt_array($curl, [
+                CURLOPT_URL            => $remoteUrl,
+                CURLOPT_RETURNTRANSFER => 1,
+                CURLOPT_FILE           => @$file,
+                CURLOPT_TIMEOUT        => 1000,
+                CURLOPT_USERAGENT      => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.77 Safari/537.36'
+            ]);
 
-        $response = curl_exec($curl);
+            $response = curl_exec($curl);
 
-        if($response === false) {
-            throw new \Exception('Curl error: ' . curl_error($curl));
+            if($response === false) {
+                throw new \Exception('Curl error: ' . curl_error($curl));
+            }
+        } else {
+            $response = file_put_contents($filePath, fopen($remoteUrl, 'r'));
         }
 
         return $response;

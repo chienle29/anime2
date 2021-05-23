@@ -76,7 +76,7 @@ class SchedulingService
             $filePath = CT_MOVIE_PLUGIN_DIR . $videoName;
             $urlDownload = $item->download_url;
             $this->removeVideo($videoName);
-            $isDownload = MediaService::getInstance()->downloadVideo($videoName, $urlDownload);
+            $isDownload = MediaService::getInstance()->downloadVideo($filePath, $urlDownload);
             if (!$isDownload) continue;
 
             if (filesize($filePath) == 0) continue;
@@ -401,8 +401,21 @@ class SchedulingService
         $this->removeScheduledEvent($eventName);
 
         // Schedule the event
+        $afterTime = 0;
+        if ($eventName == $this->eventCreateSeries) {
+            $afterTime = 5;
+        }
+
+        if ($eventName == $this->eventCreateEpisode) {
+            $afterTime = 10;
+        }
+
+        if ($eventName == $this->eventUploadTest) {
+            $afterTime = 15;
+        }
+
         if (!$timestamp = wp_get_schedule($eventName)) {
-            wp_schedule_event(time() + 5, $interval, $eventName);
+            wp_schedule_event(time() + $afterTime, $interval, $eventName);
         }
     }
 
