@@ -29,7 +29,8 @@ class SchedulingService
     /** @var string $eventCreateEpisode Cron name used to create episode */
     public $eventCreateEpisode = 'tc_event_create_episode';
 
-    public $eventUploadTest = 'tc_event_upload_test';
+    public $eventUploadGDrive = 'tc_event_upload_drive';
+    public $eventDownloadEpisodeVideo = 'tc_event_download_episode_video';
 
     protected $intervals;
 
@@ -51,16 +52,21 @@ class SchedulingService
         add_action($this->eventCreateEpisode, function () {
             $this->getDataEpisodeMovie();
         });
-        add_action($this->eventUploadTest, function () {
-            $this->downloadAndCreateEmbedUrl();
+        add_action($this->eventDownloadEpisodeVideo, function () {
+            $this->downloadEpisodeVideo();
         });
-
+        add_action($this->eventUploadGDrive, function () {
+            $this->uploadAndCreateEmbedUrlForEpisode();
+        });
+       // $this->downloadEpisodeVideo();
+        //$this->uploadAndCreateEmbedUrlForEpisode();
         // Set what function to call for CRON events
         register_activation_hook(CT_MOVIE_PLUGIN_DIR . 'ct-movie-crawler.php', function () {
             ObjectFactory::schedulingService()->scheduleEvent($this->eventCollectUrls, 'tc_30_minutes');
             ObjectFactory::schedulingService()->scheduleEvent($this->eventCreateSeries, 'tc_30_minutes');
             ObjectFactory::schedulingService()->scheduleEvent($this->eventCreateEpisode, 'tc_30_minutes');
-            ObjectFactory::schedulingService()->scheduleEvent($this->eventUploadTest, 'tc_10_minutes');
+            ObjectFactory::schedulingService()->scheduleEvent($this->eventUploadGDrive, 'tc_10_minutes');
+            ObjectFactory::schedulingService()->scheduleEvent($this->eventDownloadEpisodeVideo, 'tc_10_minutes');
         });
         $this->movies = new Movie();
     }
@@ -68,59 +74,64 @@ class SchedulingService
     /**
      * Download file, upload to google drive and create embed url to meta data.
      */
-    public function downloadAndCreateEmbedUrl()
+    public function uploadAndCreateEmbedUrlForEpisode()
     {
         try {
-        $data = ObjectFactory::databaseService()->getDownloadUrl();
-        foreach ($data as $item) {
-            $videoName = sanitize_title(get_the_title($item->anime_saved_id)) . '.mp4';
+        $episode = ObjectFactory::databaseService()->getDownloadedEpisodeVideo();
+        $videoName = sanitize_title(get_the_title($episode->anime_saved_id)) . '.mp4';
+        $url = ObjectFactory::lauConnection()->getDriveUrl($videoName);
+        if (!$url) {
+            error_log(  'Có lỗi khi get drive url. URL:' . $url);
+        }
+        error_log( 'drive url: '. $url);
+        $id = OauthGDrive::uploadFileToGoogleDrive($url, $episode->path_vide);
+        if (!$id) {
+            error_log(  'Upload lên google drive fail. ID:' . $id);
+        }
+        error_log( 'upload file drive: '. $id);
+        $fileId = ObjectFactory::lauConnection()->createFileByDriveId(get_the_title($episode->anime_saved_id), $id);
+        if (!$fileId) {
+            error_log(  'Tạo file trên lậu fail. ID:' . $fileId);
+        }
+        error_log( 'Tạo file trên lậu: '. $url);
+        $this->createEmbedUrl($fileId, $episode->anime_saved_id);
+        error_log( 'create embed: ');
+        ObjectFactory::databaseService()->updateUploadedToGDrive($episode->id);
+        }catch (\Throwable $e) {
+            error_log(  'error when create embed url: '. $e->getMessage() );
+        } finally {
+            $this->removeVideo($episode->path_video);
+        }
+    }
+
+    /**
+     * download video from url and save path video to movie_episode
+     */
+    public function downloadEpisodeVideo()
+    {
+        try {
+            $episode = ObjectFactory::databaseService()->getDownloadUrl();
+            $videoName = sanitize_title(get_the_title($episode->anime_saved_id)) . '.mp4';
             $filePath = CT_MOVIE_PLUGIN_DIR . $videoName;
-            $urlDownload = $item->download_url;
+            $urlDownload = $episode->download_url;
+            error_log(  'video name ' . $videoName);
             error_log(  'url download. url: ' . $urlDownload);
             $isDownload = MediaService::getInstance()->downloadVideo($filePath, $urlDownload);
             if (!$isDownload) {
                 error_log(  'download file thất bại. file: ' . $isDownload);
-                continue;
+                return;
             }
-            error_log( 'download xong: '. $isDownload);
+            error_log( "downloaded video for movie_episode_id = {$episode->id}: ". $isDownload);
 
             if (filesize($filePath) == 0) {
                 error_log(  'File size = 0. filesize: ' . filesize($filePath));
-                continue;
+                return;
             }
-            error_log( 'file size: '. filesize($filePath));
-
-            $url = ObjectFactory::lauConnection()->getDriveUrl($videoName);
-            if (!$url) {
-                error_log(  'Có lỗi khi get drive url. URL:' . $url);
-                continue;
-            }
-            error_log( 'drive url: '. $url);
-            $id = OauthGDrive::uploadFileToGoogleDrive($url, $filePath);
-            if (!$id) {
-                error_log(  'Upload lên google drive fail. ID:' . $id);
-                continue;
-            }
-            error_log( 'upload file drive: '. $id);
-            $fileId = ObjectFactory::lauConnection()->createFileByDriveId(get_the_title($item->anime_saved_id), $id);
-            if (!$fileId) {
-                error_log(  'Tạo file trên lậu fail. ID:' . $fileId);
-                continue;
-            }
-            error_log( 'Tạo file trên lậu: '. $url);
-            $this->createEmbedUrl($fileId, $item->anime_saved_id);
-            error_log( 'create embed: ');
-            ObjectFactory::databaseService()->updateDownload($item->id);
-            error_log( 'set is_downlod = 1: ');
+            ObjectFactory::databaseService()->updateDownloaded($episode->id, $filePath);
+        }catch (\Throwable $throwable){
+            error_log($throwable->getMessage());
         }
-        }catch (\Throwable $e) {
-            error_log(  'error when create embed url: '. $e->getMessage() );
-        } finally {
-            $this->removeVideo($filePath);
-        }
-
     }
-
     /**
      * @param $filePath
      */

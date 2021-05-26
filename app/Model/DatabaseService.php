@@ -56,6 +56,8 @@ class DatabaseService
             url varchar(2560) NOT NULL,
             download_url varchar(1000),
             is_downloaded boolean NOT NULL DEFAULT FALSE, 
+            path_video varchar(1000) ,
+            is_uploaded boolean NOT NULL DEFAULT FALSE, 
             saved boolean NOT NULL DEFAULT FALSE,
             anime_saved_id bigint(20) UNSIGNED,
             created_at datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
@@ -245,19 +247,42 @@ class DatabaseService
         global $wpdb;
         $results = $wpdb->get_results($wpdb->prepare("SELECT id, anime_saved_id, download_url FROM " . $this->getDbTableEpisodeName() . " WHERE anime_saved_id IS NOT NULL AND is_downloaded = %s ORDER BY RAND() LIMIT 1", 0));
 
-        if(!empty($results)) return $results;
+        if(!empty($results)) return $results[0];
         return null;
     }
 
     /**
-     * @param $animeId
+     * get a episode downloaded video
+     * @return array|object|null
+     */
+    public function getDownloadedEpisodeVideo() {
+        global $wpdb;
+        $results = $wpdb->get_results($wpdb->prepare("SELECT id, anime_saved_id, download_url, path_video FROM " . $this->getDbTableEpisodeName() . " WHERE path_video IS NOT NULL AND is_downloaded = %s AND is_uploaded = %s ORDER BY RAND() LIMIT 1", [1, 0]));
+
+        if(!empty($results)) return $results[0];
+        return null;
+    }
+
+    /**
+     * @param $episodeId
+     * @param $path
      * @return bool|int
      */
-    public function updateDownload($animeId)
-    {
+    public function updateDownloaded($episodeId, string $path) {
         global $wpdb;
         $tableName = $this->getDbTableEpisodeName();
-        $sql = "UPDATE {$tableName} SET is_downloaded = 1 WHERE id = {$animeId}";
+        $sql = "UPDATE {$tableName} SET is_downloaded = 1  , path_video = '{$path}' WHERE id = {$episodeId}";
+        return $wpdb->query($sql);
+    }
+
+    /**
+     * @param $episodeId
+     * @return bool|int
+     */
+    public function updateUploadedToGDrive($episodeId) {
+        global $wpdb;
+        $tableName = $this->getDbTableEpisodeName();
+        $sql = "UPDATE {$tableName} SET is_uploaded = 1  WHERE id = {$episodeId}";
         return $wpdb->query($sql);
     }
 }
