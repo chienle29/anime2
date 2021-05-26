@@ -245,7 +245,7 @@ class DatabaseService
     public function getDownloadUrl()
     {
         global $wpdb;
-        $results = $wpdb->get_results($wpdb->prepare("SELECT id, anime_saved_id, download_url FROM " . $this->getDbTableEpisodeName() . " WHERE anime_saved_id IS NOT NULL AND is_downloaded = %s ORDER BY RAND() LIMIT 1", 0));
+        $results = $wpdb->get_results($wpdb->prepare("SELECT id, anime_saved_id, download_url, path_video, url FROM " . $this->getDbTableEpisodeName() . " WHERE anime_saved_id IS NOT NULL AND is_downloaded = %s LIMIT 1", 0));
 
         if(!empty($results)) return $results[0];
         return null;
@@ -283,6 +283,32 @@ class DatabaseService
         global $wpdb;
         $tableName = $this->getDbTableEpisodeName();
         $sql = "UPDATE {$tableName} SET is_uploaded = 1  WHERE id = {$episodeId}";
+        return $wpdb->query($sql);
+    }
+
+    /**
+     * @param $path
+     * @param $id
+     * @return bool|int
+     */
+    public function updatePathVideo($path, $id)
+    {
+        global $wpdb;
+        $tableName = $this->getDbTableEpisodeName();
+        $sql = "UPDATE {$tableName} SET path_video = '{$path}'  WHERE id = {$id}";
+        return $wpdb->query($sql);
+    }
+
+    /**
+     * @param $status
+     * @param $id
+     * @return bool|int
+     */
+    public function updateStatusDownload($status, $id)
+    {
+        global $wpdb;
+        $tableName = $this->getDbTableEpisodeName();
+        $sql = "UPDATE {$tableName} SET is_downloaded = {$status}  WHERE id = {$id}";
         return $wpdb->query($sql);
     }
 }

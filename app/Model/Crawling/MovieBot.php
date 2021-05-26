@@ -364,11 +364,35 @@ class MovieBot extends AbstractBot implements MakesCrawlRequest
             $wpdb->update( $wpdb->term_taxonomy, compact( 'count' ), array( 'term_taxonomy_id' => $term->term_id ) );
         }
     }
+
+    /**
+     * @param $episodeId
+     * @param $seriesId
+     * @param int $chapter
+     */
     public function updatePostMeta($episodeId, $seriesId, $chapter = 1)
     {
         Utils::savePostMeta($episodeId, 'ero_seri', $seriesId, true);
         Utils::savePostMeta($episodeId, 'ero_subepisode', 'Sub', true);
         Utils::savePostMeta($episodeId, 'ero_episodebaru', $chapter, true);
         Utils::savePostMeta($episodeId, 'ero_episodetitle', get_the_title($episodeId), true);
+    }
+
+    public function crawlPartialDownloadLink($url)
+    {
+        if (!$url) return null;
+
+        $this->setPostUrl($url);
+        $this->postData = new PostData();
+
+        $this->crawler = $this->request($url, "GET");
+
+        $this->responseHttpStatusCode = $this->getLatestResponse() ? $this->getLatestResponse()->getStatusCode() : null;
+
+        if(!$this->crawler) return null;
+        // Get movie title, description, thumbnail url, status, released.
+
+        $this->applyPreparer(EpisodeDownloadsPrepare::class, '.dowloads a', 'href');
+        return $this->postData;
     }
 }

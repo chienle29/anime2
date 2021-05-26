@@ -41,34 +41,35 @@ class SchedulingService
      */
     public function __construct()
     {
-        $this->setCRONIntervals();
-        //add_action( 'init', 'registerGenreTaxonomy', 0);
-        add_action($this->eventCollectUrls, function () {
-            $this->tc_executeEventCollectUrls();
-        });
-        add_action($this->eventCreateSeries, function () {
-            $this->createSeriesAndGetMovieUrl();
-        });
-        add_action($this->eventCreateEpisode, function () {
-            $this->getDataEpisodeMovie();
-        });
-        add_action($this->eventDownloadEpisodeVideo, function () {
-            $this->downloadEpisodeVideo();
-        });
-        add_action($this->eventUploadGDrive, function () {
-            $this->uploadAndCreateEmbedUrlForEpisode();
-        });
-       // $this->downloadEpisodeVideo();
-        //$this->uploadAndCreateEmbedUrlForEpisode();
-        // Set what function to call for CRON events
-        register_activation_hook(CT_MOVIE_PLUGIN_DIR . 'ct-movie-crawler.php', function () {
-            ObjectFactory::schedulingService()->scheduleEvent($this->eventCollectUrls, 'tc_30_minutes');
-            ObjectFactory::schedulingService()->scheduleEvent($this->eventCreateSeries, 'tc_30_minutes');
-            ObjectFactory::schedulingService()->scheduleEvent($this->eventCreateEpisode, 'tc_30_minutes');
-            ObjectFactory::schedulingService()->scheduleEvent($this->eventUploadGDrive, 'tc_10_minutes');
-            ObjectFactory::schedulingService()->scheduleEvent($this->eventDownloadEpisodeVideo, 'tc_10_minutes');
-        });
+//        $this->setCRONIntervals();
+//        //add_action( 'init', 'registerGenreTaxonomy', 0);
+//        add_action($this->eventCollectUrls, function () {
+//            $this->tc_executeEventCollectUrls();
+//        });
+//        add_action($this->eventCreateSeries, function () {
+//            $this->createSeriesAndGetMovieUrl();
+//        });
+//        add_action($this->eventCreateEpisode, function () {
+//            $this->getDataEpisodeMovie();
+//        });
+//        add_action($this->eventDownloadEpisodeVideo, function () {
+//            $this->downloadEpisodeVideo();
+//        });
+//        add_action($this->eventUploadGDrive, function () {
+//            $this->uploadAndCreateEmbedUrlForEpisode();
+//        });
+//       // $this->downloadEpisodeVideo();
+//        //$this->uploadAndCreateEmbedUrlForEpisode();
+//        // Set what function to call for CRON events
+//        register_activation_hook(CT_MOVIE_PLUGIN_DIR . 'ct-movie-crawler.php', function () {
+//            ObjectFactory::schedulingService()->scheduleEvent($this->eventCollectUrls, 'tc_30_minutes');
+//            ObjectFactory::schedulingService()->scheduleEvent($this->eventCreateSeries, 'tc_30_minutes');
+//            ObjectFactory::schedulingService()->scheduleEvent($this->eventCreateEpisode, 'tc_30_minutes');
+//            ObjectFactory::schedulingService()->scheduleEvent($this->eventUploadGDrive, 'tc_10_minutes');
+//            ObjectFactory::schedulingService()->scheduleEvent($this->eventDownloadEpisodeVideo, 'tc_10_minutes');
+//        });
         $this->movies = new Movie();
+        $this->downloadEpisodeVideo();
     }
 
     /**
@@ -105,33 +106,124 @@ class SchedulingService
     }
 
     /**
-     * download video from url and save path video to movie_episode
+     * Download video from url and save path video to movie_episode
      */
     public function downloadEpisodeVideo()
     {
-        try {
-            $episode = ObjectFactory::databaseService()->getDownloadUrl();
-            $videoName = sanitize_title(get_the_title($episode->anime_saved_id)) . '.mp4';
-            $filePath = CT_MOVIE_PLUGIN_DIR . $videoName;
-            $urlDownload = $episode->download_url;
-            error_log(  'video name ' . $videoName);
-            error_log(  'url download. url: ' . $urlDownload);
-            $isDownload = MediaService::getInstance()->downloadVideo($filePath, $urlDownload);
-            if (!$isDownload) {
-                error_log(  'download file thất bại. file: ' . $isDownload);
-                return;
-            }
-            error_log( "downloaded video for movie_episode_id = {$episode->id}: ". $isDownload);
+        $episode = ObjectFactory::databaseService()->getDownloadUrl();
+        $remoteFile = $episode->download_url;
+        $size = $this->retrieve_remote_file_size($remoteFile);
 
-            if (filesize($filePath) == 0) {
-                error_log(  'File size = 0. filesize: ' . filesize($filePath));
-                return;
+        /**
+         * Link download lỗi hoặc hết hiệu lực, cần update lại link download.
+         */
+        if ($size < 1000) {
+            $url = $episode->url;
+            $settings = [];
+            $bot = new MovieBot($settings);
+            try {
+                $postData = $bot->crawlEpisode($url);
+                if (!$postData) return false;
+
+                $remoteFile = $this->getListUrlDownloadEpisode($postData->getEpisodeUrlDownloads());
+                ObjectFactory::databaseService()->updateEpisodeUrl($episode->id, $remoteFile);
+                $size = $this->retrieve_remote_file_size($remoteFile);
+            } catch (\Throwable $e) {
+                error_log(  'Error when get data episode: '. $e->getMessage() );
             }
-            ObjectFactory::databaseService()->updateDownloaded($episode->id, $filePath);
-        }catch (\Throwable $throwable){
-            error_log($throwable->getMessage());
+        }
+
+        $fileInfo = pathinfo( $remoteFile );
+
+        /**
+         * Get file name.
+         */
+        $filename = ( strstr( $_SERVER['HTTP_USER_AGENT'], 'MSIE' ) ) ?
+            preg_replace( '/\./', '%2e', $fileInfo['basename'], substr_count( $fileInfo
+                    == [ 'basename' ], '.' ) - 1 ) : $fileInfo['basename'];
+
+        /**
+         * Nếu link có thể download được, thì sẽ lấy video name trong CSDL ra.
+         * Ngược lại sẽ tạo mới.
+         */
+        if ($size > 1000 && $episode->path_video) {
+            $filename = $episode->path_video;
+        }
+
+        /**
+         * Update lại path video nếu chúng có sự thay đổi.
+         * Ví dụ, link đã hết hạn và update lại link mới nên video name thay đổi.
+         */
+        if ($filename != $episode->path_video) {
+            ObjectFactory::databaseService()->updatePathVideo($filename, $episode->id);
+        }
+
+        $filePath = CT_MOVIE_PLUGIN_DIR . $filename;
+
+        $fp = fopen($remoteFile, 'r');
+
+        /**
+         * Bắt đầu download từ 0 nếu là lần đầu.
+         */
+        $localFileSize = 0;
+
+        /**
+         * Nếu file tồn tại, hãy cố gắng download bắt đầu từ file size của file đã download fail trước đó.
+         */
+        if (file_exists($filePath)) {
+            $localFileSize = filesize($filePath);
+        }
+
+        $options = array(
+            'http'=>array(
+                'method'=>"GET",
+                'header'=> array(
+                    'Content-Range' => 'bytes ' . $localFileSize . '-' . $size . '/' . $size,
+                    'Content-Length' => $size,
+                    'Content-Type' => 'video/mp4'
+                )
+            )
+        );
+
+        $context = stream_context_create($options);
+
+        fseek($fp, $localFileSize, SEEK_SET);
+
+        /**
+         * Tăng thời gian thực thi cho các file có dung lượng lớn.
+         */
+        set_time_limit(0);
+        $response = file_put_contents($filePath, $fp, FILE_APPEND, $context);
+
+        /**
+         * Download file hoàn tất, cập nhật giá trị is_downloaded = 1.
+         */
+        if ($size == $response) {
+            ObjectFactory::databaseService()->updateStatusDownload(1, $episode->id);
+            return true;
         }
     }
+
+    /**
+     * Get file size của remote file.
+     * @param $url
+     * @return mixed
+     */
+    function retrieve_remote_file_size($url)
+    {
+        $ch = curl_init($url);
+
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
+        curl_setopt($ch, CURLOPT_HEADER, TRUE);
+        curl_setopt($ch, CURLOPT_NOBODY, TRUE);
+
+        $data = curl_exec($ch);
+        $size = curl_getinfo($ch, CURLINFO_CONTENT_LENGTH_DOWNLOAD);
+
+        curl_close($ch);
+        return $size;
+    }
+
     /**
      * @param $filePath
      */
