@@ -76,7 +76,7 @@ class SchedulingService
                 return false;
             }
 
-            $id = OauthGDrive::uploadFileToGoogleDrive($url, CT_MOVIE_PLUGIN_DIR.$item->path_vide);
+            $id = OauthGDrive::uploadFileToGoogleDrive($url, CT_MOVIE_PLUGIN_DIR.$item->path_video);
             if (!$id) {
                 return false;
             }
@@ -131,27 +131,26 @@ class SchedulingService
     {
         $episode = ObjectFactory::databaseService()->getDownloadUrl();
         $remoteFile = $episode->download_url;
-//        $header = get_headers("$remoteFile");
-//        $key = key(preg_grep('/\bLength\b/i', $header));
-//        $size = @explode(" ", $header[$key])[1];
-//        /**
-//         * Link download lỗi hoặc hết hiệu lực, cần update lại link download.
-//         */
-//        if ($size < 1000) {
-//            $url = $episode->url;
-//            $settings = [];
-//            $bot = new MovieBot($settings);
-//            try {
-//                $postData = $bot->crawlEpisode($url);
-//                if (!$postData) return false;
-//
-//                $remoteFile = $this->getListUrlDownloadEpisode($postData->getEpisodeUrlDownloads());
-//                ObjectFactory::databaseService()->updateEpisodeUrl($episode->id, $remoteFile);
-//                $size = $this->retrieve_remote_file_size($remoteFile);
-//            } catch (\Throwable $e) {
-//                error_log(  'Error when get data episode: '. $e->getMessage() );
-//            }
-//        }
+        $header = get_headers("$remoteFile");
+        $key = key(preg_grep('/\bLength\b/i', $header));
+        $size = @explode(" ", $header[$key])[1];
+        /**
+         * Link download lỗi hoặc hết hiệu lực, cần update lại link download.
+         */
+        if ($size < 1000) {
+            $url = $episode->url;
+            $settings = [];
+            $bot = new MovieBot($settings);
+            try {
+                $postData = $bot->crawlEpisode($url);
+                if (!$postData) return false;
+
+                $remoteFile = $this->getListUrlDownloadEpisode($postData->getEpisodeUrlDownloads());
+                ObjectFactory::databaseService()->updateEpisodeUrl($episode->id, $remoteFile);
+            } catch (\Throwable $e) {
+                error_log(  'Error when get data episode: '. $e->getMessage() );
+            }
+        }
         echo 'Download remote file url: ' . $remoteFile;
         echo PHP_EOL;
 
@@ -304,15 +303,6 @@ class SchedulingService
     public function getRealDownloadUrl($urls): string
     {
         return $urls[0];
-//        $regex = '/.mp4$/';
-//        $result = '';
-//        foreach ($urls as $url) {
-//            if (preg_match($regex, $url)) {
-//                $result = $url;
-//                break;
-//            }
-//        }
-//        return $result;
     }
 
     /**

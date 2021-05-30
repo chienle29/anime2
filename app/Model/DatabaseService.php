@@ -321,7 +321,7 @@ class DatabaseService
         global $wpdb;
         $results = $wpdb->get_results($wpdb->prepare("SELECT * FROM " . $this->getDbTableEpisodeName() . " WHERE is_downloaded = %s LIMIT 10", 1));
 
-        if(!empty($results)) return $results[0];
+        if(!empty($results)) return $results;
         return null;
     }
 }

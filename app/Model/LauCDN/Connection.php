@@ -93,7 +93,7 @@ class Connection implements Request
             'data_format' => 'body',
         ];
         $response = $this->post($url, $params);
-        if ($response) return $response->data->file_id;
+        if ($response) return $response->data->file_id_hash;
         return false;
     }
 }
