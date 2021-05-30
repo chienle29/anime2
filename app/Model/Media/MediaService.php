@@ -56,7 +56,8 @@ class MediaService
      * @return MediaService
      * @since 1.8.0
      */
-    public static function getInstance() {
+    public static function getInstance()
+    {
         if (static::$instance === null) static::$instance = new MediaService();
         return static::$instance;
     }
@@ -64,14 +65,15 @@ class MediaService
     /**
      * Saves the given URL in uploads folder and returns full URL of the uploaded file.
      *
-     * @param string $fileUrl         Full URL of the file to be downloaded
+     * @param string $fileUrl Full URL of the file to be downloaded
      * @param null|MediaSavingOptions Options
      * @return array|null An array with keys <b>'url'</b> (full URL for the file), <b>'file'</b> (absolute path of the
      *          file) and <b>'type'</b> (type of the file), or null
      * @since 1.10.2 The method signature is changed. $userAgentString and $timeoutSeconds are removed,
      *        ?MediaSavingOptions $options is added instead.
      */
-    public function saveMedia($fileUrl, ?MediaSavingOptions $options = null) {
+    public function saveMedia($fileUrl, ?MediaSavingOptions $options = null)
+    {
         // Built on the example at: https://codex.wordpress.org/Function_Reference/wp_handle_sideload
         // Gives us access to the download_url() and wp_handle_sideload() functions
         // If the function it's not available, require it.
@@ -112,25 +114,25 @@ class MediaService
 
             // Array based on $_FILE as seen in PHP file uploads
             $file = [
-                'name'      => "{$fileName}.{$ext}", // ex: wp-header-logo.png
-                'ext'       => $ext,
-                'tmp_name'  => $tempFile,
-                'error'     => 0,
-                'size'      => @filesize($tempFile),
+                'name' => "{$fileName}.{$ext}", // ex: wp-header-logo.png
+                'ext' => $ext,
+                'tmp_name' => $tempFile,
+                'error' => 0,
+                'size' => @filesize($tempFile),
             ];
 
             $overrides = [
                 // Tells WordPress to not look for the POST form fields that would normally be present, default is true,
                 // we downloaded the file from a remote server, so there will be no form fields
-                'test_form'     => false,
+                'test_form' => false,
 
                 // Setting this to false lets WordPress allow empty files, not recommended
-                'test_size'     => true,
+                'test_size' => true,
 
                 // A properly uploaded file will pass this test. There should be no reason to override this one.
-                'test_upload'   => true,
+                'test_upload' => true,
 
-                'test_type'     => false,
+                'test_type' => false,
             ];
 
             // Move the temporary file into the uploads directory
@@ -140,7 +142,7 @@ class MediaService
                 $this->onSaveMediaFinished();
                 return $results;
             } else {
-                error_log('error in process save media: '. $results['error']);
+                error_log('error in process save media: ' . $results['error']);
             }
 
         } else {
@@ -156,7 +158,8 @@ class MediaService
      *
      * @since 1.10.2
      */
-    private function onSaveMediaFinished() {
+    private function onSaveMediaFinished()
+    {
         // Disable the user agent and request args
         $this->enableUserAgent(false);
         $this->enableRequestArgs(false);
@@ -165,20 +168,21 @@ class MediaService
         $this->mediaSavingOptions = null;
 
         // Invalidate the file URL and its response
-        $this->lastFileUrl  = null;
+        $this->lastFileUrl = null;
         $this->lastResponse = null;
     }
 
     /**
      * Inserts the file as media for a given post
      *
-     * @param int       $postId    The post ID to which the media will be attached
+     * @param int $postId The post ID to which the media will be attached
      * @param MediaFile $mediaFile Media file to be inserted. The media file must have a local path.
      * @return int ID of the inserted media (attachment)
      * @throws Exception If the media file does not have a local path ({@link MediaFile::getLocalPath()})
      * @since 1.8.0 Uses a MediaFile instance as a parameter instead of $filePath, $title, and $alt parameters.
      */
-    public function insertMedia($postId, MediaFile $mediaFile) {
+    public function insertMedia($postId, MediaFile $mediaFile)
+    {
         // Built on the example at: https://codex.wordpress.org/Function_Reference/wp_insert_attachment
 
         if (!$mediaFile->getLocalPath()) throw new Exception('Media file must have a valid local path');
@@ -190,26 +194,26 @@ class MediaService
 
         // Prepare an array of post data for the attachment.
         $attachment = [
-            'guid'              => $mediaFile->getLocalUrl(),
-            'post_mime_type'    => $fileType['type'],
-            'post_title'        => $mediaFile->getMediaTitle(),
-            'post_content'      => $mediaFile->getMediaDescription(),
-            'post_excerpt'      => $mediaFile->getMediaCaption(),
-            'post_status'       => 'inherit'
+            'guid' => $mediaFile->getLocalUrl(),
+            'post_mime_type' => $fileType['type'],
+            'post_title' => $mediaFile->getMediaTitle(),
+            'post_content' => $mediaFile->getMediaDescription(),
+            'post_excerpt' => $mediaFile->getMediaCaption(),
+            'post_status' => 'inherit'
         ];
 
         // Insert the attachment.
         $attachmentId = wp_insert_attachment($attachment, $filePath, $postId);
 
         // If the function it's not available, require it.
-        if ( ! function_exists( 'download_url' ) ) {
+        if (!function_exists('download_url')) {
             require_once ABSPATH . 'wp-admin/includes/file.php';
         }
 
         // Generate the metadata for the attachment, and update the database record.
         $attachmentData = wp_generate_attachment_metadata($attachmentId, $filePath);
 
-        if($mediaFile->getMediaAlt()) update_post_meta($attachmentId, '_wp_attachment_image_alt', $mediaFile->getMediaAlt());
+        if ($mediaFile->getMediaAlt()) update_post_meta($attachmentId, '_wp_attachment_image_alt', $mediaFile->getMediaAlt());
 
         wp_update_attachment_metadata($attachmentId, $attachmentData);
         return $attachmentId;
@@ -222,7 +226,8 @@ class MediaService
      * @since 1.10.2
      * @internal This is used in unit tests and not intended to be used outside the tests.
      */
-    public function invalidateState() {
+    public function invalidateState()
+    {
         static::$instance = null;
     }
 
@@ -232,8 +237,9 @@ class MediaService
      * @param string $fileUrl URL of the file that will be saved
      * @since 1.10.2
      */
-    private function onBeforeSaveMedia(string $fileUrl) {
-        $this->lastFileUrl  = $fileUrl;
+    private function onBeforeSaveMedia(string $fileUrl)
+    {
+        $this->lastFileUrl = $fileUrl;
         $this->lastResponse = null;
 
         // Register the filters that change the request parameters
@@ -251,7 +257,8 @@ class MediaService
      * @return array|null See {@link lastResponse}
      * @since 1.10.2
      */
-    private function getLastResponse(): ?array {
+    private function getLastResponse(): ?array
+    {
         return $this->lastResponse;
     }
 
@@ -261,7 +268,8 @@ class MediaService
      *
      * @since 1.10.2
      */
-    private function maybeRegisterUserAgentFilter() {
+    private function maybeRegisterUserAgentFilter()
+    {
         // If the filter is already registered, stop. Registering it once is enough.
         if ($this->userAgentFilterRegistered) return;
 
@@ -269,7 +277,7 @@ class MediaService
         $filterPriority = 87;
 
         // Changes WP's default user agent
-        add_filter('http_headers_useragent', function($defaultValue) {
+        add_filter('http_headers_useragent', function ($defaultValue) {
             // If changing the user agent string is not enabled, return the default value. We can control this behavior
             // by changing the static variable's value.
             if (!$this->userAgentEnabled) return $defaultValue;
@@ -294,7 +302,8 @@ class MediaService
      *                      making requests.
      * @since 1.10.2
      */
-    private function enableUserAgent(bool $enabled) {
+    private function enableUserAgent(bool $enabled)
+    {
         $this->userAgentEnabled = $enabled;
     }
 
@@ -303,11 +312,12 @@ class MediaService
      *
      * @since 1.10.2
      */
-    private function maybeRegisterRequestArgsFilter() {
+    private function maybeRegisterRequestArgsFilter()
+    {
         // If registered, stop. No need to register it multiple times.
         if ($this->requestArgsFilterRegistered) return;
 
-        add_filter('http_request_args', function($args) {
+        add_filter('http_request_args', function ($args) {
             // If custom request arguments should not be used, stop.
             if (!$this->requestArgsEnabled) return $args;
 
@@ -330,7 +340,8 @@ class MediaService
      *                      making requests.
      * @since 1.10.2
      */
-    private function enableRequestArgs(bool $enabled) {
+    private function enableRequestArgs(bool $enabled)
+    {
         $this->requestArgsEnabled = $enabled;
     }
 
@@ -341,11 +352,12 @@ class MediaService
      * @since 1.10.2
      * @noinspection PhpUnusedParameterInspection
      */
-    private function maybeRegisterHttpApiDebugAction() {
+    private function maybeRegisterHttpApiDebugAction()
+    {
         // If registered, stop. No need to register it multiple times.
         if ($this->httpApiDebugActionRegistered) return;
 
-        add_action('http_api_debug', function($response, $context, $cls, $args, $url) {
+        add_action('http_api_debug', function ($response, $context, $cls, $args, $url) {
             // Stop if it is not enabled.
             if (!$this->httpApiDebugEnabled) return;
 
@@ -365,7 +377,8 @@ class MediaService
      * @return string|null See {@link lastFileUrl}
      * @since 1.10.2
      */
-    private function getLastFileUrl(): ?string {
+    private function getLastFileUrl(): ?string
+    {
         return $this->lastFileUrl;
     }
 
@@ -373,7 +386,8 @@ class MediaService
      * @param bool $enabled See {@link httpApiDebugEnabled}
      * @since 1.10.2
      */
-    private function enableHttpApiDebug(bool $enabled) {
+    private function enableHttpApiDebug(bool $enabled)
+    {
         $this->httpApiDebugEnabled = $enabled;
     }
 
@@ -381,7 +395,8 @@ class MediaService
      * @return MediaSavingOptions|null
      * @since 1.10.2
      */
-    private function getMediaSavingOptions(): ?MediaSavingOptions {
+    private function getMediaSavingOptions(): ?MediaSavingOptions
+    {
         return $this->mediaSavingOptions;
     }
 
@@ -391,7 +406,8 @@ class MediaService
      * @param string $path
      * @since 1.8.0
      */
-    public function removeTestFilePath($path) {
+    public function removeTestFilePath($path)
+    {
 
         // Find the key of the test file path
         $key = array_search($path, $this->testFilePaths);
@@ -408,31 +424,40 @@ class MediaService
      */
     public function downloadVideo($filePath, $remoteUrl)
     {
-        set_time_limit(0);
-        $file = fopen($filePath, 'w+');
-        chmod($filePath, 0755);
-
-        $regex = "/.mp4$/";
-        if (preg_match($regex, $remoteUrl)) {
-            $curl = curl_init();
-
-            curl_setopt_array($curl, [
-                CURLOPT_URL            => $remoteUrl,
-                CURLOPT_RETURNTRANSFER => 1,
-                CURLOPT_FILE           => @$file,
-                CURLOPT_TIMEOUT        => 10000,
-                CURLOPT_USERAGENT      => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.77 Safari/537.36'
-            ]);
-
-            $response = curl_exec($curl);
-
-            if($response === false) {
-                throw new \Exception('Curl error: ' . curl_error($curl));
-            }
-        } else {
-            $response = file_put_contents(@$filePath, fopen($remoteUrl, 'r'));
+        echo "Retrieving http header...";
+        $header = get_headers("$remoteUrl");
+        $pp = "0";
+        $key = key(preg_grep('/\bLength\b/i', $header));
+        $tbytes = @explode(" ", $header[$key])[1];
+        echo " Target size: " . floor((($tbytes / 1000) / 1000)) . " Mb || " . floor(($tbytes / 1000)) . " Kb";
+        echo PHP_EOL;
+        $remote = fopen($remoteUrl, 'r');
+        echo 'File path: ' . $filePath;
+        $local = fopen($filePath, 'w');
+        $read_bytes = 0;
+        echo PHP_EOL;
+        while (!feof($remote)) {
+            $buffer = fread($remote, intval($tbytes));
+            fwrite($local, $buffer);
+            $read_bytes += 2048;
+            $progress = min(100, 100 * $read_bytes / $tbytes);
+            $progress = substr($progress, 0, 6) * 4;
+            $shell = 10;
+            $rt = $shell * $progress / 100;
+            echo " \033[35;2m\e[0m Downloading: [" . round($progress, 3) . "%] " . floor((($read_bytes / 1000) * 4)) . "Kb ";
+            if ($pp === $shell) {
+                $pp = 0;
+            };
+            if ($rt === $shell) {
+                $rt = 0;
+            };
+            echo str_repeat("█", $rt) . str_repeat("=", ($pp++)) . ">@\r";
+            usleep(1000);
         }
-
-        return $response;
+        echo " \033[35;2m\e[0mDone [100%]  " . floor((($tbytes / 1000) / 1000)) . " Mb || " . floor(($tbytes / 1000)) . " Kb   \r";
+        echo PHP_EOL;
+        fclose($remote);
+        fclose($local);
+        return true;
     }
 }
