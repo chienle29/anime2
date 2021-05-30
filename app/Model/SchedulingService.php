@@ -171,7 +171,7 @@ class SchedulingService
          * Download file hoàn tất, cập nhật giá trị is_downloaded = 1.
          */
         if ($response) {
-            ObjectFactory::databaseService()->updateStatusDownload(1, $filename, $episode->id);
+            ObjectFactory::databaseService()->updateStatusDownload(1, $filename. '.mp4', $episode->id);
             return true;
         } else {
             echo 'Download file fail.';
