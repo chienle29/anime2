@@ -35,9 +35,5 @@ class Settings
     const CATEGORY_LAST_CHECKED_URL                  = '_ct_category_last_checked_url';
     const MOVIE_EPISODE                              = '_ct_movie_episode';
     const MOVIE_EPISODE_ATTR                         = '_ct_movie_episode_attr';
-    const AUTO_CRAWL_MOVIE                           = '_ct_auto_crawl_movie';
-    const COLLECT_URLS_INTERVAL                      = '_ct_collect_urls_interval';
-    const CREATE_SERIES_INTERVAL                     = '_ct_create_series_interval';
-    const CRAWL_ANIME_INTERVAL                       = '_ct_crawl_anime_interval';
     const LAU_API_KEY                                = '_ct_lau_api_key';
 }

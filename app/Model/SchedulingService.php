@@ -92,39 +92,6 @@ class SchedulingService
     }
 
     /**
-     * Download file, upload to google drive and create embed url to meta data.
-     */
-    public function uploadAndCreateEmbedUrlForEpisode()
-    {
-        try {
-        $episode = ObjectFactory::databaseService()->getDownloadedEpisodeVideo();
-        $videoName = sanitize_title(get_the_title($episode->anime_saved_id)) . '.mp4';
-        $url = ObjectFactory::lauConnection()->getDriveUrl($videoName);
-        if (!$url) {
-            error_log(  'Có lỗi khi get drive url. URL:' . $url);
-        }
-        error_log( 'drive url: '. $url);
-        $id = OauthGDrive::uploadFileToGoogleDrive($url, $episode->path_vide);
-        if (!$id) {
-            error_log(  'Upload lên google drive fail. ID:' . $id);
-        }
-        error_log( 'upload file drive: '. $id);
-        $fileId = ObjectFactory::lauConnection()->createFileByDriveId(get_the_title($episode->anime_saved_id), $id);
-        if (!$fileId) {
-            error_log(  'Tạo file trên lậu fail. ID:' . $fileId);
-        }
-        error_log( 'Tạo file trên lậu: '. $url);
-        $this->createEmbedUrl($fileId, $episode->anime_saved_id);
-        error_log( 'create embed: ');
-        ObjectFactory::databaseService()->updateUploadedToGDrive($episode->id);
-        }catch (\Throwable $e) {
-            error_log(  'error when create embed url: '. $e->getMessage() );
-        } finally {
-            $this->removeVideo($episode->path_video);
-        }
-    }
-
-    /**
      * Download video from url and save path video to movie_episode
      */
     public function downloadEpisodeVideo()
@@ -496,33 +463,6 @@ class SchedulingService
 
         if (!$timestamp = wp_get_schedule($eventName)) {
             wp_schedule_event(time() + $afterTime, $interval, $eventName);
-        }
-    }
-
-    /**
-     * Schedule events with time intervals specified by the user
-     */
-    public function scheduleEvents()
-    {
-        $intervalCollectUrls = get_option(Settings::COLLECT_URLS_INTERVAL);
-        $intervalCrawlPosts = get_option(Settings::CREATE_SERIES_INTERVAL);
-
-        $this->scheduleEvent($this->eventCollectUrls, $intervalCollectUrls);
-        $this->scheduleEvent($this->eventCreateSeries, $intervalCrawlPosts);
-    }
-
-    /**
-     * Handles scheduling by setting the CRON jobs if scheduling is active, or deleting current jobs if scheduling is
-     * disabled.
-     */
-    public function handleCronEvents()
-    {
-        // URL collection and post-crawling
-        $cronIsActive = get_option(Settings::AUTO_CRAWL_MOVIE) ? true : false;
-        if ($cronIsActive) {
-            $this->scheduleEvents();
-        } else {
-            $this->removeURLCollectionAndCrawlingEvents();
         }
     }
 

@@ -279,10 +279,6 @@ class Utils
     public static function getOptionKeys()
     {
         return [
-            Settings::AUTO_CRAWL_MOVIE,
-            Settings::COLLECT_URLS_INTERVAL,
-            Settings::CREATE_SERIES_INTERVAL,
-            Settings::CRAWL_ANIME_INTERVAL,
             Settings::LAU_API_KEY
         ];
     }
