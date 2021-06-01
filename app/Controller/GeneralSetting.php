@@ -151,9 +151,6 @@ class GeneralSetting extends \CTMovie\Objects\Page\AbstractMenuPage
         $message    = '';
         $success    = true;
 
-        // Set or remove CRON events
-        ObjectFactory::schedulingService()->handleCronEvents();
-
         $this->handleSaveRequest($data, $success, $message);
 
         // Redirect back
