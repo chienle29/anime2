@@ -13,7 +13,9 @@ class DownloadVideo
         $path = dirname(__FILE__);
         $arr = str_replace('wp-content/plugins/ct-movie-crawler', '', $path);
         require_once($arr . 'wp-load.php');
+        print "Downloading... \n";
         ObjectFactory::schedulingService()->downloadEpisodeVideo();
+        print "download finish \n";
     }
 }
 $download = new DownloadVideo();

@@ -20,6 +20,9 @@ use CTMovie\Model\Service\OauthGDrive;
  */
 class SchedulingService
 {
+    const IS_DOWNLOADING = 2;
+    const IS_DOWNLOADED = 1;
+
     /** @var string $eventCollectUrls Cron name used to collects url */
     public $eventCollectUrls = 'tc_event_collect_urls';
 
@@ -94,17 +97,16 @@ class SchedulingService
     /**
      * Download file, upload to google drive and create embed url to meta data.
      */
-    public function uploadAndCreateEmbedUrlForEpisode()
+    public function uploadAndCreateEmbedUrlForEpisode($episode, $filePath)
     {
         try {
-        $episode = ObjectFactory::databaseService()->getDownloadedEpisodeVideo();
         $videoName = sanitize_title(get_the_title($episode->anime_saved_id)) . '.mp4';
         $url = ObjectFactory::lauConnection()->getDriveUrl($videoName);
         if (!$url) {
             error_log(  'Có lỗi khi get drive url. URL:' . $url);
         }
         error_log( 'drive url: '. $url);
-        $id = OauthGDrive::uploadFileToGoogleDrive($url, $episode->path_vide);
+        $id = OauthGDrive::uploadFileToGoogleDrive($url, $filePath);
         if (!$id) {
             error_log(  'Upload lên google drive fail. ID:' . $id);
         }
@@ -129,53 +131,67 @@ class SchedulingService
      */
     public function downloadEpisodeVideo()
     {
-        $episode = ObjectFactory::databaseService()->getDownloadUrl();
-        $remoteFile = $episode->download_url;
-        $header = get_headers("$remoteFile");
-        $key = key(preg_grep('/\bLength\b/i', $header));
-        $size = @explode(" ", $header[$key])[1];
-        /**
-         * Link download lỗi hoặc hết hiệu lực, cần update lại link download.
-         */
-        if ($size < 1000) {
-            $url = $episode->url;
-            $settings = [];
-            $bot = new MovieBot($settings);
-            try {
-                $postData = $bot->crawlEpisode($url);
-                if (!$postData) return false;
+        $episodes = ObjectFactory::databaseService()->getDownloadUrl();
+        foreach ($episodes as $episode) {
+            $isDownloading = ObjectFactory::databaseService()->checkInProcessDownload($episode->id);
+            if($isDownloading)
+                continue;
+            $remoteFile = $episode->download_url;
+            $header = get_headers("$remoteFile");
+            $key = key(preg_grep('/\bLength\b/i', $header));
+            $size = @explode(" ", $header[$key])[1];
+            /**
+             * Link download lỗi hoặc hết hiệu lực, cần update lại link download.
+             */
+            if ($size < 1000) {
+                $url = $episode->url;
+                $settings = [];
+                $bot = new MovieBot($settings);
+                try {
+                    $postData = $bot->crawlEpisode($url);
+                    if (!$postData) return false;
 
-                $remoteFile = $this->getListUrlDownloadEpisode($postData->getEpisodeUrlDownloads());
-                ObjectFactory::databaseService()->updateEpisodeUrl($episode->id, $remoteFile);
-            } catch (\Throwable $e) {
-                error_log(  'Error when get data episode: '. $e->getMessage() );
+                    $remoteFile = $this->getListUrlDownloadEpisode($postData->getEpisodeUrlDownloads());
+                    ObjectFactory::databaseService()->updateEpisodeUrl($episode->id, $remoteFile);
+                } catch (\Throwable $e) {
+                    error_log('Error when get data episode: ' . $e->getMessage());
+                }
+            }
+            echo 'Download remote file url: ' . $remoteFile;
+            echo PHP_EOL;
+
+            /**
+             * Get file name.
+             */
+            $filename = sanitize_title(get_the_title($episode->anime_saved_id));
+
+            $filePath = CT_MOVIE_PLUGIN_DIR . $filename . '.mp4';
+            ObjectFactory::databaseService()->updateStatusDownload(self::IS_DOWNLOADING, $filename . '.mp4', $episode->id);
+            /**
+             * Tăng thời gian thực thi cho các file có dung lượng lớn.
+             */
+            set_time_limit(0);
+            $response = MediaService::getInstance()->downloadVideo($filePath, $remoteFile);
+
+            /**
+             * Download file hoàn tất, cập nhật giá trị is_downloaded = 1.
+             */
+            if ($response) {
+                ObjectFactory::databaseService()->updateStatusDownload(self::IS_DOWNLOADED, $filename . '.mp4', $episode->id);
+                $this->uploadAndCreateEmbedUrlForEpisode($episode, $filePath);
+                return true;
+            } else {
+                echo 'Download file fail.';
             }
         }
-        echo 'Download remote file url: ' . $remoteFile;
-        echo PHP_EOL;
+    }
 
-        /**
-         * Get file name.
-         */
-        $filename = sanitize_title(get_the_title($episode->anime_saved_id));
+    /**
+     * check episode is downloading
+     * @param $id
+     */
+    public function checkIsProcessDownloading($id) {
 
-        $filePath = CT_MOVIE_PLUGIN_DIR . $filename . '.mp4';
-
-        /**
-         * Tăng thời gian thực thi cho các file có dung lượng lớn.
-         */
-        set_time_limit(0);
-        $response = MediaService::getInstance()->downloadVideo($filePath, $remoteFile);
-
-        /**
-         * Download file hoàn tất, cập nhật giá trị is_downloaded = 1.
-         */
-        if ($response) {
-            ObjectFactory::databaseService()->updateStatusDownload(1, $filename. '.mp4', $episode->id);
-            return true;
-        } else {
-            echo 'Download file fail.';
-        }
     }
 
     /**

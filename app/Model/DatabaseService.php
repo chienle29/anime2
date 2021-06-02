@@ -245,10 +245,22 @@ class DatabaseService
     public function getDownloadUrl()
     {
         global $wpdb;
-        $results = $wpdb->get_results($wpdb->prepare("SELECT id, anime_saved_id, download_url, path_video, url FROM " . $this->getDbTableEpisodeName() . " WHERE anime_saved_id IS NOT NULL AND is_downloaded = %s LIMIT 1", 0));
+        $results = $wpdb->get_results($wpdb->prepare("SELECT id, anime_saved_id, download_url, path_video, url FROM " . $this->getDbTableEpisodeName() . " WHERE anime_saved_id IS NOT NULL AND is_downloaded = %s", 0));
 
-        if(!empty($results)) return $results[0];
+        if(!empty($results)) return $results;
         return null;
+    }
+
+    /**
+     * @param $id
+     * @return int
+     */
+    public function checkInProcessDownload($id) {
+        global $wpdb;
+        $results = $wpdb->get_results($wpdb->prepare("SELECT is_downloaded FROM " . $this->getDbTableEpisodeName() . " WHERE id = %d ", $id));
+        if(!empty($results))
+            return (int)$results[0]->is_downloaded;
+        return 0;
     }
 
     /**
