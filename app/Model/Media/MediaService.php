@@ -424,27 +424,27 @@ class MediaService
      */
     public function downloadVideo($filePath, $remoteUrl)
     {
-        $file = fopen($filePath, 'w+');
-        chmod($filePath, 0755);
-
-        $regex = "/.mp4$/";
-        if (preg_match($regex, $remoteUrl)) {
-            $curl = curl_init();
-
-            curl_setopt_array($curl, [
-                CURLOPT_URL            => $remoteUrl,
-                CURLOPT_RETURNTRANSFER => 1,
-                CURLOPT_FILE           => @$file,
-                CURLOPT_TIMEOUT        => 1000,
-                CURLOPT_USERAGENT      => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.77 Safari/537.36'
-            ]);
-
-            $response = curl_exec($curl);
-
-            if($response === false) {
-                throw new \Exception('Curl error: ' . curl_error($curl));
-            }
-        } else {
+//        $file = fopen($filePath, 'w+');
+//        chmod($filePath, 0755);
+//
+//        $regex = "/.mp4$/";
+//        if (preg_match($regex, $remoteUrl)) {
+//            $curl = curl_init();
+//
+//            curl_setopt_array($curl, [
+//                CURLOPT_URL            => $remoteUrl,
+//                CURLOPT_RETURNTRANSFER => 1,
+//                CURLOPT_FILE           => @$file,
+//                CURLOPT_TIMEOUT        => 1000,
+//                CURLOPT_USERAGENT      => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.77 Safari/537.36'
+//            ]);
+//
+//            $response = curl_exec($curl);
+//
+//            if($response === false) {
+//                throw new \Exception('Curl error: ' . curl_error($curl));
+//            }
+//        } else {
             $header = get_headers("$remoteUrl");
             $pp = "0";
             $key = key(preg_grep('/\bLength\b/i', $header));
@@ -479,7 +479,7 @@ class MediaService
             fclose($remote);
             fclose($local);
             $response = true;
-        }
+        //}
 
         return $response;
 //        $command = 'wget -O'.$filePath . ' ' . $remoteUrl;
