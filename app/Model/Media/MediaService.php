@@ -424,40 +424,8 @@ class MediaService
      */
     public function downloadVideo($filePath, $remoteUrl)
     {
-        echo "Retrieving http header...";
-        $header = get_headers("$remoteUrl");
-        $pp = "0";
-        $key = key(preg_grep('/\bLength\b/i', $header));
-        $tbytes = @explode(" ", $header[$key])[1];
-        echo " Target size: " . floor((($tbytes / 1000) / 1000)) . " Mb || " . floor(($tbytes / 1000)) . " Kb";
-        echo PHP_EOL;
-        $remote = fopen($remoteUrl, 'r');
-        echo 'File path: ' . $filePath;
-        $local = fopen($filePath, 'w');
-        $read_bytes = 0;
-        echo PHP_EOL;
-        while (!feof($remote)) {
-            $buffer = fread($remote, intval($tbytes));
-            fwrite($local, $buffer);
-            $read_bytes += 2048;
-            $progress = min(100, 100 * $read_bytes / $tbytes);
-            $progress = substr($progress, 0, 6) * 4;
-            $shell = 10;
-            $rt = $shell * $progress / 100;
-            echo " \033[35;2m\e[0m Downloading: [" . round($progress, 3) . "%] " . floor((($read_bytes / 1000) * 4)) . "Kb ";
-            if ($pp === $shell) {
-                $pp = 0;
-            };
-            if ($rt === $shell) {
-                $rt = 0;
-            };
-            echo str_repeat("█", $rt) . str_repeat("=", ($pp++)) . ">@\r";
-            usleep(1000);
-        }
-        echo " \033[35;2m\e[0mDone [100%]  " . floor((($tbytes / 1000) / 1000)) . " Mb || " . floor(($tbytes / 1000)) . " Kb   \r";
-        echo PHP_EOL;
-        fclose($remote);
-        fclose($local);
+        $command = 'wget -O'.$filePath . ' ' . $remoteUrl;
+        exec($command ,$op);
         return true;
     }
 }
