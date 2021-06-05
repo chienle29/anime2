@@ -125,7 +125,6 @@ class SchedulingService
                     error_log('Error when get data episode: ' . $e->getMessage());
                 }
             }
-            echo 'Download remote file url: ' . $remoteFile;
             echo PHP_EOL;
 
             /**
@@ -147,7 +146,7 @@ class SchedulingService
             if ($response) {
                 ObjectFactory::databaseService()->updateStatusDownload(self::IS_DOWNLOADED, $filename . '.mp4', $episode->id);
                 $this->uploadAndCreateEmbedUrlForEpisode($episode, $filePath);
-                return true;
+                print "Download finish \n";
             } else {
                 echo 'Download file fail.';
             }
@@ -155,11 +154,37 @@ class SchedulingService
     }
 
     /**
-     * check episode is downloading
-     * @param $id
+     * Download file, upload to google drive and create embed url to meta data.
      */
-    public function checkIsProcessDownloading($id) {
+    public function uploadAndCreateEmbedUrlForEpisode($episode, $filePath)
+    {
+        try {
+            $videoName = sanitize_title(get_the_title($episode->anime_saved_id)) . '.mp4';
+            $url = ObjectFactory::lauConnection()->getDriveUrl($videoName);
+            if (!$url) {
+                print "Có lỗi xảy ra khi lấy drive url \n";
+                return false;
+            }
+            print "Upload google drive... \n";
+            $id = OauthGDrive::uploadFileToGoogleDrive($url, $filePath);
+            if (!$id) {
+                print "Upload google drive thất bại \n";
+                return false;
+            }
+            print "Tạo file trên lậu... \n";
+            $fileId = ObjectFactory::lauConnection()->createFileByDriveId(get_the_title($episode->anime_saved_id), $id);
+            if (!$fileId) {
+                print "Tạo file trên lậu fail \n";
+                return false;
+            }
 
+            $this->createEmbedUrl($fileId, $episode->anime_saved_id);
+            ObjectFactory::databaseService()->updateUploadedToGDrive($episode->id);
+        }catch (\Throwable $e) {
+            error_log(  'error when create embed url: '. $e->getMessage() );
+        } finally {
+            $this->removeVideo($filePath);
+        }
     }
 
     /**

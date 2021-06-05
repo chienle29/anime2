@@ -15,7 +15,7 @@ class DownloadVideo
         require_once($arr . 'wp-load.php');
         print "Downloading... \n";
         ObjectFactory::schedulingService()->downloadEpisodeVideo();
-        print "download finish \n";
+        print "Complete. \n";
     }
 }
 $download = new DownloadVideo();
