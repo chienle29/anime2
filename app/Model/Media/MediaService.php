@@ -424,8 +424,66 @@ class MediaService
      */
     public function downloadVideo($filePath, $remoteUrl)
     {
-        $command = 'wget -O'.$filePath . ' ' . $remoteUrl;
-        exec($command ,$op);
-        return true;
+        $file = fopen($filePath, 'w+');
+        chmod($filePath, 0755);
+
+        $regex = "/.mp4$/";
+        if (preg_match($regex, $remoteUrl)) {
+            $curl = curl_init();
+
+            curl_setopt_array($curl, [
+                CURLOPT_URL            => $remoteUrl,
+                CURLOPT_RETURNTRANSFER => 1,
+                CURLOPT_FILE           => @$file,
+                CURLOPT_TIMEOUT        => 1000,
+                CURLOPT_USERAGENT      => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.77 Safari/537.36'
+            ]);
+
+            $response = curl_exec($curl);
+
+            if($response === false) {
+                throw new \Exception('Curl error: ' . curl_error($curl));
+            }
+        } else {
+            $header = get_headers("$remoteUrl");
+            $pp = "0";
+            $key = key(preg_grep('/\bLength\b/i', $header));
+            $tbytes = @explode(" ", $header[$key])[1];
+            echo " Target size: " . floor((($tbytes / 1000) / 1000)) . " Mb || " . floor(($tbytes / 1000)) . " Kb";
+            echo PHP_EOL;
+            $remote = fopen($remoteUrl, 'r');
+            echo 'File path: ' . $filePath;
+            $local = fopen($filePath, 'w');
+            $read_bytes = 0;
+            echo PHP_EOL;
+            while (!feof($remote)) {
+                $buffer = fread($remote, intval($tbytes));
+                fwrite($local, $buffer);
+                $read_bytes += 2048;
+                $progress = min(100, 100 * $read_bytes / $tbytes);
+                $progress = substr($progress, 0, 6) * 4;
+                $shell = 10;
+                $rt = $shell * $progress / 100;
+                echo " \033[35;2m\e[0m Downloading: [" . round($progress, 3) . "%] " . floor((($read_bytes / 1000) * 4)) . "Kb ";
+                if ($pp === $shell) {
+                    $pp = 0;
+                };
+                if ($rt === $shell) {
+                    $rt = 0;
+                };
+                echo str_repeat("█", $rt) . str_repeat("=", ($pp++)) . ">@\r";
+                usleep(1000);
+            }
+            echo " \033[35;2m\e[0mDone [100%]  " . floor((($tbytes / 1000) / 1000)) . " Mb || " . floor(($tbytes / 1000)) . " Kb   \r";
+            echo PHP_EOL;
+            fclose($remote);
+            fclose($local);
+            $response = true;
+        }
+
+        return $response;
+//        $command = 'wget -O'.$filePath . ' ' . $remoteUrl;
+//        exec($command ,$op);
+//        return true;
     }
 }
