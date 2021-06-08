@@ -24,10 +24,16 @@ class RegisterCustomApi
      */
     public function getDataForScriptDownload()
     {
-        register_rest_route('ct-movie-crawler/v1','/episode',array(
-            'methods'   =>  "GET",
-            'callback'  =>  'getEpisodeData',
-        ));
+        register_rest_route('ct-movie-crawler/v1', sprintf(
+            '/%s',
+            'episode'
+        ), array(
+                array(
+                    'methods' => "GET",
+                    'callback' => array($this, 'getEpisodeData'),
+                )
+            )
+        );
     }
 
     /**
@@ -55,7 +61,7 @@ class RegisterCustomApi
          * Nếu không có dữ liệu để trả về.
          */
         if (empty($episode)) {
-            return new WP_Error( 'empty_episode', 'there is no episode.', array('status' => 404) );
+            return new WP_Error('empty_episode', 'there is no episode.', array('status' => 404));
         }
 
         $response = new WP_REST_Response($episode);
