@@ -68,7 +68,7 @@ class RegisterCustomApi
         }
         $remoteUrl = $episode->download_url;
 
-        $header = get_headers("$episode->download_url");
+        $header = get_headers("$remoteUrl");
         $key = key(preg_grep('/\bLength\b/i', $header));
         $size = @explode(" ", $header[$key])[1];
         /**
