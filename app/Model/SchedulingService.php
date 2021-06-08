@@ -32,8 +32,6 @@ class SchedulingService
     /** @var string $eventCreateEpisode Cron name used to create episode */
     public $eventCreateEpisode = 'tc_event_create_episode';
 
-    public $eventUploadGDrive = 'tc_event_upload_drive';
-
     protected $intervals;
 
     protected $movies;

@@ -245,7 +245,7 @@ class DatabaseService
     public function getDownloadUrl()
     {
         global $wpdb;
-        $results = $wpdb->get_results($wpdb->prepare("SELECT id, anime_saved_id, download_url, path_video, url FROM " . $this->getDbTableEpisodeName() . " WHERE anime_saved_id IS NOT NULL AND is_downloaded = %s", 0));
+        $results = $wpdb->get_results($wpdb->prepare("SELECT id, anime_saved_id, download_url, url FROM " . $this->getDbTableEpisodeName() . " WHERE anime_saved_id IS NOT NULL AND is_downloaded = %s LIMIT 1", 0));
 
         if(!empty($results)) return $results;
         return null;
@@ -313,15 +313,14 @@ class DatabaseService
 
     /**
      * @param $status
-     * @param $fileName
      * @param $id
      * @return bool|int
      */
-    public function updateStatusDownload($status, $fileName, $id)
+    public function updateStatusDownload($status, $id)
     {
         global $wpdb;
         $tableName = $this->getDbTableEpisodeName();
-        $sql = "UPDATE {$tableName} SET is_downloaded = {$status}, path_video = '{$fileName}' WHERE id = {$id}";
+        $sql = "UPDATE {$tableName} SET is_downloaded = {$status} WHERE id = {$id}";
         return $wpdb->query($sql);
     }
 

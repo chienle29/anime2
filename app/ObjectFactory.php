@@ -11,6 +11,7 @@ use CTMovie\Model\DatabaseService;
 use CTMovie\Model\SchedulingService;
 use CTMovie\Model\LauCDN\Connection;
 use CTMovie\Model\Service\OauthGDrive;
+use CTMovie\Model\RegisterCustomApi;
 
 /**
  * Class ObjectFactory
@@ -27,8 +28,6 @@ class ObjectFactory
 
     private static $movieService;
 
-    private static $toolsController;
-
     private static $databaseService;
 
     private static $schedulingService;
@@ -41,6 +40,8 @@ class ObjectFactory
 
     private static $gdriveService;
 
+    private static $registerApi;
+
     /**
      * ObjectFactory constructor.
      */
@@ -52,6 +53,7 @@ class ObjectFactory
         ObjectFactory::schedulingService();
         ObjectFactory::reportController();
         ObjectFactory::GDriveService();
+        ObjectFactory::registerCustomApi();
     }
 
     /** @return ObjectFactory */
@@ -69,6 +71,11 @@ class ObjectFactory
     /** @return GeneralSetting */
     public static function generalSettingsController() {
         return static::getClassInstance(GeneralSetting::class, static::$generalSettingsController);
+    }
+
+    /** @return RegisterCustomApi */
+    public static function registerCustomApi() {
+        return static::getClassInstance(RegisterCustomApi::class, static::$registerApi);
     }
 
     /** @return Report */
