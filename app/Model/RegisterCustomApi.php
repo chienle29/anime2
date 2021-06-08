@@ -12,15 +12,27 @@ use WP_Error;
  */
 class RegisterCustomApi
 {
+    /**
+     * Trạng thái đang download.
+     */
     const IS_DOWNLOADING = 2;
 
+    /**
+     * RegisterCustomApi constructor.
+     */
     public function __construct()
     {
+        /**
+         * Đăng ký api, lấy dữ liệu.
+         */
         add_action('rest_api_init', function () {
             register_rest_route('ct/v1','/episode', [
                 'methods'   =>  "GET",
                 'callback'  =>  [$this, 'getEpisodeData']
             ]);
+            /**
+             * Đăng ký api, cập nhật thông tin cho phim.
+             */
             register_rest_route('ct/v1','/update_iframe', [
                 'methods'   =>  "POST",
                 'callback'  =>  [$this, 'updateIframe']
@@ -28,6 +40,10 @@ class RegisterCustomApi
         });
     }
 
+    /**
+     * Lấy dữ liệu để script download video.
+     * @return WP_Error|WP_REST_Response
+     */
     function getEpisodeData()
     {
         /**
@@ -57,9 +73,46 @@ class RegisterCustomApi
         return $response;
     }
 
+    /**
+     * Cập nhật lại iframe của phim.
+     * Cập nhật lại trạng thái của record, để biết rằng record này đã được download hoàn tất.
+     * @param $request
+     * @return WP_REST_Response
+     */
     public function updateIframe($request)
     {
-        $response = $request['iframe'];
+        /**
+         * Lấy dữ liệu được gửi sang từ script php.
+         */
+        $iframeUrl  = $request['iframe'];
+        $postId     = $request['post_id'];
+        $recordId   = $request['record_id'];
+
+        /**
+         * Tạo embed.
+         */
+        $embed = '<iframe src="'.$iframeUrl.'" frameborder="0" style="overflow:hidden;height:100%;width:100%" height="100%" width="100%" allowfullscreen="true"></iframe>';
+        $data = array(
+            0 => array(
+                'ab_hostname' => 'lstream',
+                'ab_embed' => $embed,
+                '_state' => 'expanded'
+            )
+        );
+        /**
+         * Cập nhật lại phim với embed đã tạo ở trên.
+         */
+        update_post_meta($postId, 'ab_embedgroup', $data);
+
+        /**
+         * Cập nhật lại trạng thái của record - đã download hoàn tất.
+         */
+        ObjectFactory::databaseService()->updateUploadedToGDrive($recordId);
+
+        /**
+         * Trả response về cho script.
+         */
+        $response = ['response' => true];
         $res = new WP_REST_Response($response);
         $res->set_status(200);
 
