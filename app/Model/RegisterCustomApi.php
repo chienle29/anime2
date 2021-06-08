@@ -24,7 +24,7 @@ class RegisterCustomApi
      */
     public function getDataForScriptDownload()
     {
-        register_rest_route('ct-movies/v1','/episode',array(
+        register_rest_route('ct-movie-crawler/v1','/episode',array(
             'methods'   =>  "GET",
             'callback'  =>  'getEpisodeData',
         ));
