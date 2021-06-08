@@ -5,41 +5,30 @@ namespace CTMovie\Model;
 use CTMovie\ObjectFactory;
 use WP_REST_Response;
 use WP_Error;
+use WP_REST_Controller;
+use WP_REST_Server;
 
 /**
  * Class RegisterCustomApi
  * @package CTMovie\Model
  */
-class RegisterCustomApi
+class RegisterCustomApi extends WP_REST_Controller
 {
     const IS_DOWNLOADING = 2;
 
-    public function __construct()
-    {
-        add_action('rest_api_init', function () {
-            register_rest_route('ct-movie-crawler/v1', '/episode', array(
-                    'methods' => 'GET',
-                    'callback' => 'getEpisodeData'
-                )
-            );
-        });
-    }
-
     /**
-     * Đăng ký Api để lấy dữ liệu trả về cho script php.
+     * Register the routes for the objects of the controller.
      */
-    public function getDataForScriptDownload()
-    {
-        register_rest_route('ct-movie-crawler/v1', sprintf(
-            '/%s',
-            'episode'
-        ), array(
-                array(
-                    'methods' => "GET",
-                    'callback' => array($this, 'getEpisodeData'),
-                )
+    public function register_routes() {
+        $version = '1';
+        $namespace = 'ct-movie-crawler/v' . $version;
+        $base = 'episode';
+        register_rest_route( $namespace, '/' . $base, array(
+            array(
+                'methods'             => WP_REST_Server::READABLE,
+                'callback'            => array( $this, 'getEpisodeData' )
             )
-        );
+        ) );
     }
 
     /**
