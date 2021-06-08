@@ -26,16 +26,17 @@ class RegisterCustomApi extends WP_REST_Controller
         register_rest_route( $namespace, '/' . $base, array(
             array(
                 'methods'             => WP_REST_Server::READABLE,
-                'callback'            => array( $this, 'getEpisodeData' )
+                'callback'            => array( $this, 'get_items' )
             )
         ) );
     }
 
     /**
      *
+     * @param $request
      * @return WP_Error|WP_REST_Response
      */
-    public function getEpisodeData()
+    public function get_items($request)
     {
         /**
          * Mỗi request chỉ lấy 1 record có anime_saved_id khác null và is_downloaded = 1
