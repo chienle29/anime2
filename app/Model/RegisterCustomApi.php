@@ -59,10 +59,10 @@ class RegisterCustomApi
 
     public function updateIframe($request)
     {
-        $response = $request['body'];
+        $response = $request['iframe'];
         $res = new WP_REST_Response($response);
         $res->set_status(200);
 
-        return ['req' => $res];
+        return $res;
     }
 }
