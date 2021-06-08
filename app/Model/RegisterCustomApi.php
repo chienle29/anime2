@@ -2,6 +2,7 @@
 
 namespace CTMovie\Model;
 
+use CTMovie\Model\Crawling\MovieBot;
 use CTMovie\ObjectFactory;
 use WP_REST_Response;
 use WP_Error;
@@ -41,8 +42,8 @@ class RegisterCustomApi
     }
 
     /**
-     * Lấy dữ liệu để script download video.
-     * @return WP_Error|WP_REST_Response
+     * Lấy dữ liệu cho script.
+     * @return false|WP_Error|WP_REST_Response
      */
     function getEpisodeData()
     {
@@ -52,13 +53,12 @@ class RegisterCustomApi
          */
         $episode = ObjectFactory::databaseService()->getDownloadUrl();
 
-        $episodeId = $episode->id;
-
         /**
-         * Sau khi lấy dữ liệu rồi thì cập nhật trạng thái thành đang download (2)
-         * Để các script ở server sẽ không lấy record này nữa.
+         * Lấy phần tử đầu tiên của mảng.
          */
-        ObjectFactory::databaseService()->updateStatusDownload(self::IS_DOWNLOADING, $episodeId);
+        if (count($episode) == 1) {
+            $episode = $episode[0];
+        }
 
         /**
          * Nếu không có dữ liệu để trả về.
@@ -66,6 +66,42 @@ class RegisterCustomApi
         if (empty($episode)) {
             return new WP_Error( 'empty_episode', 'there is no episode.', ['status' => 404]);
         }
+        $remoteUrl = $episode->download_url;
+
+        $header = get_headers("$episode->download_url");
+        $key = key(preg_grep('/\bLength\b/i', $header));
+        $size = @explode(" ", $header[$key])[1];
+        /**
+         * Link download lỗi hoặc hết hiệu lực, cần update lại link download.
+         */
+        if ($size < 1000) {
+            $url = $episode->url;
+            $settings = [];
+            $bot = new MovieBot($settings);
+            try {
+                $postData = $bot->crawlEpisode($url);
+                if (!$postData) {
+                    return new WP_Error( 'link_download_die', 'Link download died.', ['status' => 404]);
+                }
+
+                $remoteUrl = $this->getListUrlDownloadEpisode($postData->getEpisodeUrlDownloads());
+                ObjectFactory::databaseService()->updateEpisodeUrl($episode->id, $remoteUrl);
+            } catch (\Throwable $e) {
+                error_log('Error when get data episode: ' . $e->getMessage());
+            }
+        }
+
+        /**
+         * Cập nhật lại link download.
+         */
+        $episode->download_url = $remoteUrl;
+
+        $episodeId = $episode->id;
+        /**
+         * Sau khi lấy dữ liệu rồi thì cập nhật trạng thái thành đang download (2)
+         * Để các script ở server sẽ không lấy record này nữa.
+         */
+        ObjectFactory::databaseService()->updateStatusDownload(self::IS_DOWNLOADING, $episodeId);
 
         $response = new WP_REST_Response($episode);
         $response->set_status(200);
@@ -117,5 +153,32 @@ class RegisterCustomApi
         $res->set_status(200);
 
         return $res;
+    }
+
+    /**
+     * get link download episode
+     * @param $urlDownloadEpisode
+     * @return string
+     */
+    public function getListUrlDownloadEpisode($urlDownloadEpisode)
+    {
+        $settings = [];//get_post_meta(24);
+        $bot = new MovieBot($settings);
+        try {
+            $postData = $bot->crawlListLinkDownLoadEpisode($urlDownloadEpisode);
+            return $this->getRealDownloadUrl($postData->getEpisodeUrlDownloadList());
+        }catch (\Throwable $e) {
+            error_log(  'error when url download episode: '. $e->getMessage() );
+            return null;
+        }
+    }
+
+    /**
+     * @param $urls
+     * @return string
+     */
+    public function getRealDownloadUrl($urls): string
+    {
+        return $urls[0];
     }
 }
