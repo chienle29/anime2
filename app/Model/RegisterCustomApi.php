@@ -16,7 +16,13 @@ class RegisterCustomApi
 
     public function __construct()
     {
-        add_action('rest_api_init', 'getDataForScriptDownload');
+        add_action('rest_api_init', function () {
+            register_rest_route('ct-movie-crawler/v1', '/episode', array(
+                    'methods' => 'GET',
+                    'callback' => 'getEpisodeData'
+                )
+            );
+        });
     }
 
     /**
@@ -38,10 +44,9 @@ class RegisterCustomApi
 
     /**
      *
-     * @param $request
      * @return WP_Error|WP_REST_Response
      */
-    public function getEpisodeData($request)
+    public function getEpisodeData()
     {
         /**
          * Mỗi request chỉ lấy 1 record có anime_saved_id khác null và is_downloaded = 1
