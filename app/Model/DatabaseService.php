@@ -56,8 +56,6 @@ class DatabaseService
             url varchar(2560) NOT NULL,
             download_url varchar(1000),
             is_downloaded boolean NOT NULL DEFAULT FALSE, 
-            path_video varchar(1000) ,
-            is_uploaded boolean NOT NULL DEFAULT FALSE, 
             saved boolean NOT NULL DEFAULT FALSE,
             anime_saved_id bigint(20) UNSIGNED,
             created_at datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
