@@ -38,6 +38,13 @@ class RegisterCustomApi
                 'methods'   =>  "POST",
                 'callback'  =>  [$this, 'updateIframe']
             ]);
+            /**
+             * Đăng ký api, cập nhật thông tin cho tập phim.
+             */
+            register_rest_route('ct/v1','/update_episode', [
+                'methods'   =>  "POST",
+                'callback'  =>  [$this, 'updateEpisode']
+            ]);
         });
     }
 
@@ -180,5 +187,30 @@ class RegisterCustomApi
     public function getRealDownloadUrl($urls): string
     {
         return $urls[0];
+    }
+
+    public function updateEpisode($request)
+    {
+        $episodeId = $request['id'] ?? '';
+        $response = ['response' => true, 'status' => 200];
+        try {
+            if(isset($request['update_status'])) {
+                ObjectFactory::databaseService()->updateStatusDownload($request['update_status'], $episodeId);
+                $response['message'] = "success";
+            }elseif ($request['update_uploaded']) {
+                ObjectFactory::databaseService()->updateUploadedToGDrive($request['id']);
+                $response['message'] = "success";
+            }
+            else{
+                $response['message'] = "invalid request";
+            }
+        }catch (\Exception $e){
+            $response['error'] = $e->getMessage();
+            $response['status'] = 500;
+        }
+        $res = new WP_REST_Response($response);
+        $res->set_status($response['status']);
+
+        return $res;
     }
 }
