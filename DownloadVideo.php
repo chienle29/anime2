@@ -20,7 +20,7 @@ class DownloadVideo
         do {
             $episode = $this->getData();
             if ($episode) {
-                echo 'episode '. $episode->url .' is downloading...';
+                echo 'episode '. $episode->url ."\nis downloading...";
                 $this->downloadEpisodeVideo($episode);
             }
         } while ($episode);
@@ -50,16 +50,15 @@ class DownloadVideo
         $header = get_headers("$remoteFile");
         $key = key(preg_grep('/\bLength\b/i', $header));
         $size = @explode(" ", $header[$key])[1];
-        $path = dirname(__FILE__);
+        $path = dirname(__FILE__).'/';
         /**
          * Link download lỗi hoặc hết hiệu lực, cần update lại link download.
          */
         if ($size < 1000) {
-            echo "\nlink expired";
+            echo "\ncan't download this link it's expired or denied\n";
             return null;
         }
         echo PHP_EOL;
-
         /**
          * Get file name.
          */
@@ -132,10 +131,8 @@ class DownloadVideo
         echo PHP_EOL;
         fclose($remote);
         fclose($local);
-        $response = true;
-        //}
 
-        return $response;
+        return true;
     }
 
     /**
@@ -147,15 +144,6 @@ class DownloadVideo
     public function uploadAndCreateEmbedUrlForEpisode($episode, $filePath)
     {
         try {
-            $filePath = dirname(__FILE__).'/sample.mp4';
-            $data = '{
-                "id": "9",
-                "anime_saved_id": "51",
-                "download_url": "https://storage.googleapis.com/argon-ability-315202/X19F8KUO9OH/st22_fategrand-order-first-order-episode-1.1623430246.mp4",
-                "url": "https://gogoanime.vc/fategrand-order-first-order-episode-1",
-                "is_downloaded": "0"
-            }';
-            $episode = json_decode($data);
             $temp = explode('/', $episode->url);
             $videoName = end($temp);
             $url = $this->getDriveUrl($videoName.'.mp4');
