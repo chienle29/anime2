@@ -293,7 +293,16 @@ class DatabaseService
         global $wpdb;
         $tableName = $this->getDbTableEpisodeName();
         $sql = "UPDATE {$tableName} SET is_uploaded = 1  WHERE id = {$episodeId}";
-        return $wpdb->query($sql);
+        $wpdb->query($sql);
+        $results = $wpdb->get_results($wpdb->prepare("SELECT series_id FROM " . $tableName . " WHERE id = %d ", $episodeId));
+        if(!empty($results)) {
+            $seriesId = (int)$results[0]->series_id;
+            wp_update_post(array(
+                'ID'    =>  $seriesId,
+                'post_status'   =>  'publish'
+            ));
+        }
+        return true;
     }
 
     /**

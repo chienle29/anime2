@@ -240,7 +240,7 @@ class MovieBot extends AbstractBot implements MakesCrawlRequest
             'post_title' => $post->getTitle(),
             'post_content' => $post->getContents()?? '',
             'ping_status'  => $post->getStatus(),
-            'post_status' => 'publish',
+            'post_status' => 'draft',
         ];
         if($series->ID){
             $seriesData['ID'] = $series->ID;
